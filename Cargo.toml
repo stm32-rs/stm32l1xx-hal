@@ -22,8 +22,8 @@ version = "0.0.0"
 [dependencies]
 cortex-m = "0.5.8"
 cortex-m-rt = "0.6.5"
-nb = "0.1.1"
 cortex-m-semihosting = "0.3.2"
+nb = "0.1.1"
 
 [dependencies.bare-metal]
 features = ["const-fn"]
@@ -47,15 +47,18 @@ version = "1.0.2"
 [dev-dependencies]
 cortex-m-semihosting = "0.3.2"
 panic-semihosting = "0.5.1"
+cortex-m-rtfm = "0.4.0-beta.3"
 
 [features]
-default = ["stm32l100", "rt"]
+default = [
+    "stm32l100",
+    "rt",
+]
 rt = ["stm32l1/rt"]
 stm32l100 = ["stm32l1/stm32l100"]
 stm32l151 = ["stm32l1/stm32l151"]
 stm32l152 = ["stm32l1/stm32l151"]
 stm32l162 = ["stm32l1/stm32l162"]
-
 
 [profile.dev]
 codegen-units = 1
