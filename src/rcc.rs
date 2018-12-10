@@ -208,6 +208,7 @@ impl Config {
                     PLLDiv::Div3 => freq / 3,
                     PLLDiv::Div4 => freq / 4,
                 };
+                assert!(freq <= 24.mhz().0);
 
                 rcc.cfgr.write(move |w| unsafe {
                     w.pllmul()
@@ -222,7 +223,6 @@ impl Config {
                 rcc.cr.write(|w| w.pllon().set_bit());
                 while rcc.cr.read().pllrdy().bit_is_clear() {}
 
-                assert!(freq <= 24.mhz().0);
                 (freq, 3)
             }
         };
