@@ -6,6 +6,7 @@
 extern crate stm32l1xx_hal as hal;
 extern crate cortex_m;
 extern crate cortex_m_rt as rt;
+#[macro_use]
 extern crate cortex_m_semihosting as sh;
 extern crate panic_semihosting;
 
@@ -45,8 +46,7 @@ fn main() -> ! {
 
 fn button_press(state: &mut u8) {
     *state += 1;
-    let mut hio = sh::hio::hstdout().unwrap();
-    writeln!(hio, "CLICK # {}", state).unwrap();
+    hprintln!("CLICK # {}", state).unwrap();
 
     cortex_m::interrupt::free(|cs| {
         if let &mut Some(ref mut exti) = INT.borrow(cs).borrow_mut().deref_mut() {

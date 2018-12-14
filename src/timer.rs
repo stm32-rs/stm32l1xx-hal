@@ -1,12 +1,12 @@
 //! Timers
 use cast::{u16, u32};
 use cortex_m::peripheral::syst::SystClkSource;
-use cortex_m::peripheral::SYST;
+use cortex_m::peripheral::{SYST, NVIC};
 use hal::timer::{CountDown, Periodic};
 use nb;
 use void::Void;
 
-use stm32::{RCC, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM9};
+use stm32::{Interrupt, RCC, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM9};
 
 use rcc::Clocks;
 use time::Hertz;
@@ -15,12 +15,6 @@ use time::Hertz;
 pub struct Timer<TIM> {
     clocks: Clocks,
     tim: TIM,
-}
-
-/// Interrupt events
-pub enum Event {
-    /// Timer timed out / count down ended
-    TimeOut,
 }
 
 impl Timer<SYST> {
@@ -35,18 +29,14 @@ impl Timer<SYST> {
         timer
     }
 
-    /// Starts listening for an `event`
-    pub fn listen(&mut self, event: Event) {
-        match event {
-            Event::TimeOut => self.tim.enable_interrupt(),
-        }
+    /// Starts listening
+    pub fn listen(&mut self) {
+        self.tim.enable_interrupt()
     }
 
-    /// Stops listening for an `event`
-    pub fn unlisten(&mut self, event: Event) {
-        match event {
-            Event::TimeOut => self.tim.disable_interrupt(),
-        }
+    /// Stops listening
+    pub fn unlisten(&mut self) {
+        self.tim.disable_interrupt()
     }
 }
 
@@ -100,24 +90,18 @@ macro_rules! hal {
                     timer
                 }
 
-                /// Starts listening for an `event`
-                pub fn listen(&mut self, event: Event) {
-                    match event {
-                        Event::TimeOut => {
-                            // Enable update event interrupt
-                            self.tim.dier.write(|w| w.uie().set_bit());
-                        }
-                    }
+                /// Starts listening
+                pub fn listen(&mut self, nvic: &mut NVIC) {
+                    // Enable update event interrupt
+                    self.tim.dier.write(|w| w.uie().set_bit());
+                    nvic.enable(Interrupt::$TIM);
                 }
 
-                /// Stops listening for an `event`
-                pub fn unlisten(&mut self, event: Event) {
-                    match event {
-                        Event::TimeOut => {
-                            // Enable update event interrupt
-                            self.tim.dier.write(|w| w.uie().clear_bit());
-                        }
-                    }
+                /// Stops listening
+                pub fn unlisten(&mut self, nvic: &mut NVIC) {
+                    // Disable update event interrupt
+                    nvic.disable(Interrupt::$TIM);
+                    self.tim.dier.write(|w| w.uie().clear_bit());
                 }
 
                 /// Releases the TIM peripheral
