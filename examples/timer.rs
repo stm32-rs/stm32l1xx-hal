@@ -1,4 +1,4 @@
-// #![deny(warnings)]
+#![deny(warnings)]
 #![no_main]
 #![no_std]
 
@@ -24,7 +24,7 @@ fn main() -> ! {
     let mut cp = cortex_m::Peripherals::take().unwrap();
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.sys_clk_src(SysClockSource::HSI).freeze();
-   
+
     let mut timer = Timer::tim2(dp.TIM2, 2.hz(), clocks);
     timer.listen(&mut cp.NVIC);
     timer.start(2.hz());

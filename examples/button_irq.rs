@@ -54,5 +54,4 @@ fn button_press(state: &mut u8) {
             exti.pr.modify(|_, w| w.pr0().set_bit());
         }
     });
-    
 }

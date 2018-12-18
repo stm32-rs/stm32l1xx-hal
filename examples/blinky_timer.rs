@@ -19,7 +19,7 @@ use rt::entry;
 #[entry]
 fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
-    
+
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.sys_clk_src(SysClockSource::HSI).freeze();
     
@@ -32,7 +32,7 @@ fn main() -> ! {
         timer.start(2.hz());
         block!(timer.wait()).unwrap();
         led.set_high();
-        
+
         timer.start(2.hz());
         block!(timer.wait()).unwrap();
         led.set_low();

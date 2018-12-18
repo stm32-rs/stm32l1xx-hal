@@ -26,7 +26,7 @@ fn main() -> ! {
     let mut pwm = dp.TIM5.pwm(c1, 10.khz(), clocks);
 
     let max = pwm.get_max_duty();
-   
+
     pwm.enable();
     
     // full

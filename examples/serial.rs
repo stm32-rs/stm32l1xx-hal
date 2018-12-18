@@ -20,12 +20,12 @@ use rt::entry;
 
 #[entry]
 fn main() -> ! {
-	let dp = stm32::Peripherals::take().unwrap();
+    let dp = stm32::Peripherals::take().unwrap();
     
-	let rcc = dp.RCC.constrain();
-	let clocks = rcc.cfgr.sys_clk_src(SysClockSource::HSI).freeze();
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sys_clk_src(SysClockSource::HSI).freeze();
     
-	let gpiob = dp.GPIOB.split();
+    let gpiob = dp.GPIOB.split();
     let tx = gpiob.pb10.into_alternate_af7();
     let rx = gpiob.pb11.into_alternate_af7();
 
@@ -38,9 +38,9 @@ fn main() -> ! {
 
     let (mut tx, mut rx) = serial.split();
 
-	loop {
+    loop {
         let received = block!(rx.read()).unwrap();
-		tx.write_str("\r\n").unwrap();
-		block!(tx.write(received)).ok();
+        tx.write_str("\r\n").unwrap();
+        block!(tx.write(received)).ok();
     }
 }
