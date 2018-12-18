@@ -49,13 +49,12 @@ cortex-m-semihosting = "0.3.2"
 panic-semihosting = "0.5.1"
 
 [features]
-default = ["stm32l100", "rt"]
+default = ["rt"]
 rt = ["stm32l1/rt"]
 stm32l100 = ["stm32l1/stm32l100"]
 stm32l151 = ["stm32l1/stm32l151"]
 stm32l152 = ["stm32l1/stm32l151"]
 stm32l162 = ["stm32l1/stm32l162"]
-
 
 [profile.dev]
 codegen-units = 1
