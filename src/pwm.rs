@@ -68,8 +68,8 @@ macro_rules! channels {
             }
         }      
     };
-    ($TIMX:ident, $c1:ty, $c2:ty) => {
-
+    ($TIMX:ident, $c1:ty, $c2:ty, $c3:ty, $c4:ty) => {
+       
         channels!($TIMX, $c1);
 
         impl Pins<$TIMX> for $c2 {
@@ -78,7 +78,23 @@ macro_rules! channels {
             fn init(tim: &$TIMX) {
                 tim.ccmr1_output.modify(|_, w| unsafe { w.oc2pe().set_bit().oc2m().bits(6) });
             }
-        }       
+        }
+        
+        impl Pins<$TIMX> for $c3 {
+            type Channels = Pwm<$TIMX, C3>;
+            
+            fn init(tim: &$TIMX) {
+                tim.ccmr2_output.modify(|_, w| unsafe { w.oc3pe().set_bit().oc3m().bits(6) });
+            }
+        }
+
+        impl Pins<$TIMX> for $c4 {
+            type Channels = Pwm<$TIMX, C4>;
+            
+            fn init(tim: &$TIMX) {
+                tim.ccmr2_output.modify(|_, w| unsafe { w.oc4pe().set_bit().oc4m().bits(6) });
+            }
+        }
         
         impl Pins<$TIMX> for ($c1, $c2) {
             type Channels = (Pwm<$TIMX, C1>, Pwm<$TIMX, C2>);
@@ -94,50 +110,6 @@ macro_rules! channels {
                         .oc2m()
                         .bits(6)
                 });
-            }
-        }
-  
-        impl hal::PwmPin for Pwm<$TIMX, C2> {
-            type Duty = u16;
-
-            fn disable(&mut self) {
-                unsafe { (*$TIMX::ptr()).ccer.modify(|_, w| w.cc2e().clear_bit()); }
-            }
-
-            fn enable(&mut self) {
-                unsafe { (*$TIMX::ptr()).ccer.modify(|_, w| w.cc2e().set_bit()); }
-            }
-
-            fn get_duty(&self) -> u16 {
-                unsafe { (*$TIMX::ptr()).ccr2.read().ccr2().bits() }
-            }
-
-            fn get_max_duty(&self) -> u16 {
-                unsafe { (*$TIMX::ptr()).arr.read().arr().bits() }
-            }
-
-            fn set_duty(&mut self, duty: u16) {
-                unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr2().bits(duty)) }
-            }
-        }     
-    };
-    ($TIMX:ident, $c1:ty, $c2:ty, $c3:ty, $c4:ty) => {
-       
-        channels!($TIMX, $c1, $c2);
-        
-        impl Pins<$TIMX> for $c3 {
-            type Channels = Pwm<$TIMX, C3>;
-            
-            fn init(tim: &$TIMX) {
-                tim.ccmr2_output.modify(|_, w| unsafe { w.oc3pe().set_bit().oc3m().bits(6) });
-            }
-        }
-
-        impl Pins<$TIMX> for $c4 {
-            type Channels = Pwm<$TIMX, C4>;
-            
-            fn init(tim: &$TIMX) {
-                tim.ccmr2_output.modify(|_, w| unsafe { w.oc4pe().set_bit().oc4m().bits(6) });
             }
         }
 
@@ -168,8 +140,32 @@ macro_rules! channels {
                 });
             }
         }
+  
+        impl hal::PwmPin for Pwm<$TIMX, C2> {
+            type Duty = u16;
 
+            fn disable(&mut self) {
+                unsafe { (*$TIMX::ptr()).ccer.modify(|_, w| w.cc2e().clear_bit()); }
+            }
 
+            fn enable(&mut self) {
+                unsafe { (*$TIMX::ptr()).ccer.modify(|_, w| w.cc2e().set_bit()); }
+            }
+
+            fn get_duty(&self) -> u16 {
+                unsafe { (*$TIMX::ptr()).ccr2.read().ccr2().bits() }
+            }
+
+            fn get_max_duty(&self) -> u16 {
+                unsafe { (*$TIMX::ptr()).arr.read().arr().bits() }
+            }
+
+            fn set_duty(&mut self, duty: u16) {
+                unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr2().bits(duty)) }
+            }
+        }     
+        
+        
         impl hal::PwmPin for Pwm<$TIMX, C3> {
             type Duty = u16;
 
