@@ -6,9 +6,10 @@ use hal;
 use hal::prelude::*;
 use nb::block;
 
-use crate::stm32::{RCC, USART1};
+use crate::stm32::{RCC, USART1, USART2, USART3};
 
-use crate::gpio::gpioa::{PA9, PA10};
+use crate::gpio::gpioa::{PA2, PA3, PA10, PA9};
+use crate::gpio::gpiob::{PB10, PB11};
 
 use crate::gpio::{Alternate, AF7};
 use crate::rcc::Clocks;
@@ -127,6 +128,8 @@ pub mod config {
 pub trait Pins<USART> {}
 
 impl Pins<USART1> for (PA9<Alternate<AF7>>, PA10<Alternate<AF7>>) {}
+impl Pins<USART2> for (PA2<Alternate<AF7>>, PA3<Alternate<AF7>>) {}
+impl Pins<USART3> for (PB10<Alternate<AF7>>, PB11<Alternate<AF7>>) {}
 
 /// Serial abstraction
 pub struct Serial<USART, PINS> {
@@ -203,14 +206,14 @@ macro_rules! halUsart {
                             })
                     });
 
-                    // usart.cr2.write(|w| {
-                    //     w.stop().variant(match config.stopbits {
-                    //         StopBits::STOP0P5 => STOPW::STOP0P5,
-                    //         StopBits::STOP1 => STOPW::STOP1,
-                    //         StopBits::STOP1P5 => STOPW::STOP1P5,
-                    //         StopBits::STOP2 => STOPW::STOP2,
-                    //     })
-                    // });
+                    usart.cr2.write(|w| unsafe {
+                        w.stop().bits(match config.stopbits {
+                            StopBits::STOP1 => 0b00,
+                            StopBits::STOP0P5 => 0b01,
+                            StopBits::STOP2 => 0b10,
+                            StopBits::STOP1P5 => 0b11,
+                        })
+                    });
                     Ok(Serial { usart, pins })
                 }
 
@@ -326,6 +329,8 @@ macro_rules! halUsart {
 
 halUsart! {
     USART1: (usart1, apb2enr, usart1en, apb2_clk),
+    USART2: (usart2, apb1enr, usart2en, apb1_clk),
+    USART3: (usart3, apb1enr, usart3en, apb1_clk),
 }
 
 impl<USART> fmt::Write for Tx<USART>
