@@ -36,6 +36,6 @@ pub mod rcc;
 pub mod time;
 pub mod timer;
 pub mod pwm;
+pub mod serial;
 // pub mod i2c;
-// pub mod serial;
 // pub mod spi;
