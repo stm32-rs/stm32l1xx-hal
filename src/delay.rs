@@ -1,6 +1,5 @@
 //! Delays
 use cast::u32;
-use core::fmt::Write;
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
@@ -57,7 +56,6 @@ impl DelayUs<u32> for Delay {
             } else {
                 MAX_RVR
             };
-            //writeln!(sh::hio::hstdout().unwrap(), "sys_clk: {} total_rvr: {} current_rvr: {}", self.clocks.sys_clk().0, total_rvr, current_rvr);
             self.syst.set_reload(current_rvr);
             self.syst.clear_current();
             self.syst.enable_counter();
