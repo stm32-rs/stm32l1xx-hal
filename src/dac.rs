@@ -24,9 +24,13 @@ impl DacExt for DAC {
 pub struct C1;
 pub struct C2;
 
-pub trait DacOut {
+pub trait DacOut<V> {
+    fn set_value(&mut self, val: V);
+    fn get_value(&mut self) -> V;
+}
+
+pub trait DacPin {
     fn enable(&mut self);
-    fn set(&mut self, val: u16);
 }
 
 pub trait Pins<DAC> {
@@ -63,22 +67,44 @@ where
 }
 
 macro_rules! dac {
-    ($CX:ident, $en:ident, $dhrx:ident) => {
-        impl DacOut for $CX {
+    ($CX:ident, $en:ident, $dhrx:ident, $daccxdhr:ident) => {
+        impl DacPin for $CX {
             fn enable(&mut self) {
                 unsafe {
                     (*DAC::ptr()).cr.modify(|_, w| w.$en().set_bit());
                 }
             }
-            
-            fn set(&mut self, val: u16) {
+        }
+
+        impl DacOut<u16> for $CX {
+            fn set_value(&mut self, val: u16) {
                 unsafe {
                     (*DAC::ptr()).$dhrx.modify(|_, w| w.bits(u32(val)));
+                }
+            }
+            
+            fn get_value(&mut self) -> u16 {
+                unsafe {
+                    (*DAC::ptr()).$dhrx.read().$daccxdhr().bits()
+                }
+            }
+        }
+
+        impl DacOut<u8> for $CX {
+            fn set_value(&mut self, val: u8) {
+                 unsafe {
+                    (*DAC::ptr()).$dhrx.modify(|_, w| w.bits(u32(val)));
+                }
+            }
+
+            fn get_value(&mut self) -> u8 {
+                unsafe {
+                    (*DAC::ptr()).$dhrx.read().$daccxdhr().bits() as u8
                 }
             }
         }
     };
 }
 
-dac!(C1, en1, dhr12l1);
-dac!(C2, en2, dhr12l2);
+dac!(C1, en1, dhr12r1, dacc1dhr);
+dac!(C2, en2, dhr12r2, dacc2dhr);

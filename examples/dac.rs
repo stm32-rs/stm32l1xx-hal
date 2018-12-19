@@ -19,25 +19,23 @@ fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
 
     let gpioa = dp.GPIOA.split();
-    let (mut dac1, mut dac2) = dp.DAC.dac((gpioa.pa4, gpioa.pa5));
-    
-    dac1.enable();
-    dac2.enable();
-    
+    let mut dac = dp.DAC.dac(gpioa.pa4);
+
     let mut val: u16 = 0;
     let mut dir = Dir::Up;
-    
+
+    dac.enable();
+
     loop {
-        dac1.set(val);
-        dac2.set(core::u16::MAX - val);
+        dac.set_value(val);
         match val {
             0 => dir = Dir::Up,
-            core::u16::MAX => dir = Dir::Down,
+            4080 => dir = Dir::Down,
             _ => (),
         };
         match dir {
-            Dir::Up => val += 85,
-            Dir::Down => val -= 85,
+            Dir::Up => val += 1,
+            Dir::Down => val -= 1,
         }
     }
 }
