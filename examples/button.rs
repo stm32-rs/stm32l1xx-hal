@@ -27,13 +27,13 @@ fn main() -> ! {
 
     let gpiob = dp.GPIOB.split();
     let mut led = gpiob.pb6.into_push_pull_output();
-    
+
     loop {
-      if button.is_high() {
-        led.set_high();
-        delay.delay_ms(2_000_u32);
-      } else {
-        led.set_low();
-      }
+        if button.is_high() {
+            led.set_high();
+            delay.delay_ms(2_000_u32);
+        } else {
+            led.set_low();
+        }
     }
 }

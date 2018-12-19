@@ -5,51 +5,11 @@ use core::ptr;
 use hal;
 use hal::prelude::*;
 use nb::block;
+use stm32::{RCC, USART1, USART2, USART3};
 
-#[cfg(any(feature = "stm32f401", feature = "stm32f411"))]
-use stm32::{RCC, USART1, USART2, USART6};
-
-#[cfg(feature = "stm32f407")]
-use stm32::{RCC, UART4, UART5, USART1, USART2, USART3, USART6};
-
-#[cfg(feature = "stm32f412")]
-use stm32::{RCC, USART1, USART2, USART3, USART6};
-
-#[cfg(feature = "stm32f429")]
-use stm32::{RCC, UART4, UART5, UART7, UART8, USART1, USART2, USART3, USART6};
-
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-use stm32::usart6::cr2::STOPW;
-
-#[cfg(any(feature = "stm32f401", feature = "stm32f412", feature = "stm32f411"))]
-use stm32::usart1::cr2::STOPW;
-
-use gpio::gpioa::{PA10, PA2, PA3, PA9};
-use gpio::gpiob::{PB6, PB7};
-use gpio::gpioc::{PC6, PC7};
-use gpio::gpiod::{PD5, PD6};
-
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-use gpio::gpioa::{PA0, PA1};
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
+use gpio::gpioa::{PA2, PA3, PA10, PA9};
 use gpio::gpiob::{PB10, PB11};
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-use gpio::gpioc::{PC12};
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
-use gpio::gpioc::{PC10, PC11};
-#[cfg(feature = "stm32f412")]
-use gpio::gpioc::{PC5};
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
-use gpio::gpiod::{PD8, PD9};
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-use gpio::gpiod::{PD2};
-#[cfg(feature = "stm32f429")]
-use gpio::gpioe::{PE0, PE1};
-#[cfg(feature = "stm32f429")]
-use gpio::gpiof::{PF6, PF7};
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
-use gpio::gpiog::{PG14, PG9};
-use gpio::{Alternate, AF7, AF8};
+use gpio::{Alternate, AF7};
 use rcc::Clocks;
 
 /// Serial error
@@ -73,11 +33,13 @@ pub enum Event {
     Rxne,
     /// New data can be sent
     Txe,
+    /// Idle line state detected
+    Idle,
 }
 
 pub mod config {
-    use time::Bps;
-    use time::U32Ext;
+    use crate::time::Bps;
+    use crate::time::U32Ext;
 
     pub enum WordLength {
         DataBits8,
@@ -164,36 +126,8 @@ pub mod config {
 pub trait Pins<USART> {}
 
 impl Pins<USART1> for (PA9<Alternate<AF7>>, PA10<Alternate<AF7>>) {}
-impl Pins<USART1> for (PB6<Alternate<AF7>>, PB7<Alternate<AF7>>) {}
-
 impl Pins<USART2> for (PA2<Alternate<AF7>>, PA3<Alternate<AF7>>) {}
-impl Pins<USART2> for (PD5<Alternate<AF7>>, PD6<Alternate<AF7>>) {}
-
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
 impl Pins<USART3> for (PB10<Alternate<AF7>>, PB11<Alternate<AF7>>) {}
-#[cfg(any(feature = "stm32f412"))]
-impl Pins<USART3> for (PB10<Alternate<AF7>>, PC5<Alternate<AF7>>) {}
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
-impl Pins<USART3> for (PC10<Alternate<AF7>>, PC11<Alternate<AF7>>) {}
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
-impl Pins<USART3> for (PD8<Alternate<AF7>>, PD9<Alternate<AF7>>) {}
-
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-impl Pins<UART4> for (PA0<Alternate<AF8>>, PA1<Alternate<AF8>>) {}
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-impl Pins<UART4> for (PC10<Alternate<AF8>>, PC11<Alternate<AF8>>) {}
-
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-impl Pins<UART5> for (PC12<Alternate<AF8>>, PD2<Alternate<AF8>>) {}
-
-impl Pins<USART6> for (PC6<Alternate<AF8>>, PC7<Alternate<AF8>>) {}
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
-impl Pins<USART6> for (PG14<Alternate<AF8>>, PG9<Alternate<AF8>>) {}
-
-#[cfg(feature = "stm32f429")]
-impl Pins<UART7> for (PF7<Alternate<AF8>>, PF6<Alternate<AF8>>) {}
-#[cfg(feature = "stm32f429")]
-impl Pins<UART8> for (PE1<Alternate<AF8>>, PE0<Alternate<AF8>>) {}
 
 /// Serial abstraction
 pub struct Serial<USART, PINS> {
@@ -270,12 +204,12 @@ macro_rules! halUsart {
                             })
                     });
 
-                    usart.cr2.write(|w| {
-                        w.stop().variant(match config.stopbits {
-                            StopBits::STOP0P5 => STOPW::STOP0P5,
-                            StopBits::STOP1 => STOPW::STOP1,
-                            StopBits::STOP1P5 => STOPW::STOP1P5,
-                            StopBits::STOP2 => STOPW::STOP2,
+                    usart.cr2.write(|w| unsafe {
+                        w.stop().bits(match config.stopbits {
+                            StopBits::STOP1 => 0b00,
+                            StopBits::STOP0P5 => 0b01,
+                            StopBits::STOP2 => 0b10,
+                            StopBits::STOP1P5 => 0b11,
                         })
                     });
                     Ok(Serial { usart, pins })
@@ -290,10 +224,13 @@ macro_rules! halUsart {
                         Event::Txe => {
                             self.usart.cr1.modify(|_, w| w.txeie().set_bit())
                         },
+                        Event::Idle => {
+                            self.usart.cr1.modify(|_, w| w.idleie().set_bit())
+                        },
                     }
                 }
 
-                /// Starts listening for an interrupt event
+                /// Stop listening for an interrupt event
                 pub fn unlisten(&mut self, event: Event) {
                     match event {
                         Event::Rxne => {
@@ -301,6 +238,9 @@ macro_rules! halUsart {
                         },
                         Event::Txe => {
                             self.usart.cr1.modify(|_, w| w.txeie().clear_bit())
+                        },
+                        Event::Idle => {
+                            self.usart.cr1.modify(|_, w| w.idleie().clear_bit())
                         },
                     }
                 }
@@ -388,7 +328,7 @@ macro_rules! halUsart {
 halUsart! {
     USART1: (usart1, apb2enr, usart1en, apb2_clk),
     USART2: (usart2, apb1enr, usart2en, apb1_clk),
-    USART6: (usart6, apb2enr, usart6en, apb2_clk),
+    USART3: (usart3, apb1enr, usart3en, apb1_clk),
 }
 
 impl<USART> fmt::Write for Tx<USART>

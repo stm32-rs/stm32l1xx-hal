@@ -9,7 +9,7 @@ extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
 use hal::delay::Delay;
-use hal::rcc::SysClockSource;
+use hal::rcc::SysClkSource;
 use hal::prelude::*;
 use hal::stm32;
 use rt::entry;
@@ -21,18 +21,15 @@ fn main() -> ! {
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr
-      .sys_clk_src(SysClockSource::HSI)
-      .freeze();
+        .sys_clk_src(SysClkSource::HSI)
+        .freeze();
     let mut delay = Delay::new(cp.SYST, clocks);
-    
+
     let gpiob = dp.GPIOB.split();
     let mut led = gpiob.pb6.into_push_pull_output();
-    
+
     loop {
-      led.set_high();
-      delay.delay_ms(100_u16);
-      
-      led.set_low();
-      delay.delay_ms(100_u16);   
+        led.toggle();
+        delay.delay_ms(300_u16);
     }
 }

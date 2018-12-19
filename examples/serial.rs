@@ -10,26 +10,37 @@ extern crate cortex_m_rt as rt;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
+use core::fmt::Write;
 use hal::prelude::*;
 use hal::stm32;
-use hal::timer::Timer;
 use hal::rcc::SysClkSource;
+use hal::serial::Serial;
+use hal::serial::config::Config;
 use rt::entry;
 
 #[entry]
 fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
-
+    
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.sys_clk_src(SysClkSource::HSI).freeze();
     
     let gpiob = dp.GPIOB.split();
-    let mut led = gpiob.pb6.into_push_pull_output();
+    let tx = gpiob.pb10.into_alternate_af7();
+    let rx = gpiob.pb11.into_alternate_af7();
 
-    let mut timer = Timer::tim2(dp.TIM2, 2.hz(), clocks);
- 
+    let serial = Serial::usart3(
+        dp.USART3,
+        (tx, rx),
+        Config::default(),
+        clocks
+    ).unwrap();
+
+    let (mut tx, mut rx) = serial.split();
+
     loop {
-        led.toggle();
-        block!(timer.wait()).unwrap();
+        let received = block!(rx.read()).unwrap();
+        tx.write_str("\r\n").unwrap();
+        block!(tx.write(received)).ok();
     }
 }
