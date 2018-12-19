@@ -35,13 +35,14 @@ fn main() -> ! {
     
     loop {
         match val {
+            _ => (),
             0 => dir = Dir::Up,
             core::u16::MAX => dir = Dir::Down,
-            _ => match dir {
-                Dir::Up => val += 1,
-                Dir::Down => val -= 1,
-            }
         };
+        match dir {
+            Dir::Up => val += 1,
+            Dir::Down => val -= 1,
+        }
         dac1.set(val);
         dac2.set(core::u16::MAX - val);
     }

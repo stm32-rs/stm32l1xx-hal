@@ -27,8 +27,7 @@ fn main() -> ! {
     let mut led = gpiob.pb6.into_push_pull_output();
 
     let mut timer = Timer::tim2(dp.TIM2, 2.hz(), clocks);
-
-    timer.start(2.hz());
+ 
     loop {
         led.toggle();
         block!(timer.wait()).unwrap();
