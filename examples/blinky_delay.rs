@@ -29,10 +29,7 @@ fn main() -> ! {
     let mut led = gpiob.pb6.into_push_pull_output();
 
     loop {
-        led.set_high();
-        delay.delay_ms(100_u16);
-
-        led.set_low();
-        delay.delay_ms(100_u16);
+        led.toggle();
+        delay.delay_ms(300_u16);
     }
 }

@@ -17,17 +17,14 @@ pub extern crate stm32l1;
 #[cfg(feature = "stm32l100")]
 pub use stm32l1::stm32l100 as stm32;
 
-#[cfg(feature = "stm32l151")]
-pub use stm32l1::stm32l151 as stm32;
-
-#[cfg(feature = "stm32l152")]
+#[cfg(any(feature = "stm32l151", feature = "stm32l152"))]
 pub use stm32l1::stm32l151 as stm32;
 
 #[cfg(feature = "stm32l162")]
 pub use stm32l1::stm32l162 as stm32;
 
-#[cfg(feature = "rt")]
-pub use stm32l1::interrupt;
+#[cfg(all(feature = "rt"))]
+pub use stm32::interrupt;
 
 pub mod dac;
 pub mod delay;

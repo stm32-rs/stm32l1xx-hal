@@ -479,6 +479,19 @@ macro_rules! gpio {
                     }
                 }
 
+                impl<MODE> StatefulOutputPin for $PXi<Output<MODE>> {
+                    fn is_set_high(&self) -> bool {
+                        !self.is_set_low()
+                    }
+
+                    fn is_set_low(&self) -> bool {
+                        // NOTE(unsafe) atomic read with no side effects
+                        unsafe { (*$GPIOX::ptr()).odr.read().bits() & (1 << $i) == 0 }
+                    }
+                }
+
+                impl<MODE> toggleable::Default for $PXi<Output<MODE>> {}
+
                 impl<MODE> InputPin for $PXi<Output<MODE>> {
                     fn is_high(&self) -> bool {
                         !self.is_low()

@@ -28,13 +28,9 @@ fn main() -> ! {
 
     let mut timer = Timer::tim2(dp.TIM2, 2.hz(), clocks);
 
+    timer.start(2.hz());
     loop {
-        timer.start(2.hz());
+        led.toggle();
         block!(timer.wait()).unwrap();
-        led.set_high();
-
-        timer.start(2.hz());
-        block!(timer.wait()).unwrap();
-        led.set_low();
     }
 }
