@@ -19,7 +19,6 @@ pub struct C4;
 
 pub trait Pins<TIM> {
     type Channels;
-    fn init(tim: &TIM);
 }
 
 pub trait PwmExt: Sized {
@@ -35,13 +34,9 @@ pub struct Pwm<TIM, CHANNEL> {
 }
 
 macro_rules! channels {
-    ($TIMX:ident, $c1:ty) => {        
+    ($TIMX:ident, $c1:ty) => {
         impl Pins<$TIMX> for $c1 {
             type Channels = Pwm<$TIMX, C1>;
-            
-            fn init(tim: &$TIMX) {
-                tim.ccmr1_output.modify(|_, w| unsafe { w.oc1pe().set_bit().oc1m().bits(6) });
-            }
         }
 
         impl hal::PwmPin for Pwm<$TIMX, C1> {
@@ -52,7 +47,11 @@ macro_rules! channels {
             }
 
             fn enable(&mut self) {
-                unsafe { (*$TIMX::ptr()).ccer.modify(|_, w| w.cc1e().set_bit()); }
+                unsafe {
+                    let tim = &*$TIMX::ptr();
+                    tim.ccmr1_output.modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
+                    tim.ccer.modify(|_, w| w.cc1e().set_bit());
+                }
             }
 
             fn get_duty(&self) -> u16 {
@@ -66,81 +65,32 @@ macro_rules! channels {
             fn set_duty(&mut self, duty: u16) {
                 unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr1().bits(duty)) }
             }
-        }      
+        }
     };
     ($TIMX:ident, $c1:ty, $c2:ty, $c3:ty, $c4:ty) => {
-       
+
         channels!($TIMX, $c1);
 
         impl Pins<$TIMX> for $c2 {
             type Channels = Pwm<$TIMX, C2>;
-            
-            fn init(tim: &$TIMX) {
-                tim.ccmr1_output.modify(|_, w| unsafe { w.oc2pe().set_bit().oc2m().bits(6) });
-            }
         }
-        
+
         impl Pins<$TIMX> for $c3 {
             type Channels = Pwm<$TIMX, C3>;
-            
-            fn init(tim: &$TIMX) {
-                tim.ccmr2_output.modify(|_, w| unsafe { w.oc3pe().set_bit().oc3m().bits(6) });
-            }
         }
 
         impl Pins<$TIMX> for $c4 {
             type Channels = Pwm<$TIMX, C4>;
-            
-            fn init(tim: &$TIMX) {
-                tim.ccmr2_output.modify(|_, w| unsafe { w.oc4pe().set_bit().oc4m().bits(6) });
-            }
         }
-        
+
         impl Pins<$TIMX> for ($c1, $c2) {
             type Channels = (Pwm<$TIMX, C1>, Pwm<$TIMX, C2>);
-            
-            fn init(tim: &$TIMX) {
-                tim.ccmr1_output.modify(|_, w| unsafe { 
-                    w.oc1pe()
-                        .set_bit()
-                        .oc1m()
-                        .bits(6)
-                        .oc2pe()
-                        .set_bit()
-                        .oc2m()
-                        .bits(6)
-                });
-            }
         }
 
         impl Pins<$TIMX> for ($c1, $c2, $c3, $c4) {
             type Channels = (Pwm<$TIMX, C1>, Pwm<$TIMX, C2>, Pwm<$TIMX, C3>, Pwm<$TIMX, C4>);
-            
-            fn init(tim: &$TIMX) {
-                tim.ccmr1_output.modify(|_, w| unsafe { 
-                    w.oc1pe()
-                        .set_bit()
-                        .oc1m()
-                        .bits(6)
-                        .oc2pe()
-                        .set_bit()
-                        .oc2m()
-                        .bits(6)
-                        
-                });
-                tim.ccmr2_output.modify(|_, w| unsafe { 
-                    w.oc3pe()
-                        .set_bit()
-                        .oc3m()
-                        .bits(6)
-                        .oc4pe()
-                        .set_bit()
-                        .oc4m()
-                        .bits(6)
-                });
-            }
         }
-  
+
         impl hal::PwmPin for Pwm<$TIMX, C2> {
             type Duty = u16;
 
@@ -149,7 +99,11 @@ macro_rules! channels {
             }
 
             fn enable(&mut self) {
-                unsafe { (*$TIMX::ptr()).ccer.modify(|_, w| w.cc2e().set_bit()); }
+                unsafe {
+                    let tim = &*$TIMX::ptr();
+                    tim.ccmr1_output.modify(|_, w| w.oc2pe().set_bit().oc2m().bits(6));
+                    tim.ccer.modify(|_, w| w.cc2e().set_bit());
+                }
             }
 
             fn get_duty(&self) -> u16 {
@@ -163,9 +117,9 @@ macro_rules! channels {
             fn set_duty(&mut self, duty: u16) {
                 unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr2().bits(duty)) }
             }
-        }     
-        
-        
+        }
+
+
         impl hal::PwmPin for Pwm<$TIMX, C3> {
             type Duty = u16;
 
@@ -174,7 +128,11 @@ macro_rules! channels {
             }
 
             fn enable(&mut self) {
-                unsafe { (*$TIMX::ptr()).ccer.modify(|_, w| w.cc3e().set_bit()); }
+                unsafe {
+                    let tim = &*$TIMX::ptr();
+                    tim.ccmr2_output.modify(|_, w| w.oc3pe().set_bit().oc3m().bits(6));
+                    tim.ccer.modify(|_, w| w.cc3e().set_bit());
+                }
             }
 
             fn get_duty(&self) -> u16 {
@@ -198,7 +156,11 @@ macro_rules! channels {
             }
 
             fn enable(&mut self) {
-                unsafe { (*$TIMX::ptr()).ccer.modify(|_, w| w.cc4e().set_bit()); }
+                unsafe {
+                    let tim = &*$TIMX::ptr();
+                    tim.ccmr2_output.modify(|_, w| w.oc4pe().set_bit().oc4m().bits(6));
+                    tim.ccer.modify(|_, w| w.cc4e().set_bit());
+                }
             }
 
             fn get_duty(&self) -> u16 {
@@ -216,7 +178,7 @@ macro_rules! channels {
     };
 }
 
-macro_rules! hal {
+macro_rules! timers {
     ($($TIMX:ident: ($apb_clk:ident, $apbXenr:ident, $apbXrstr:ident, $timX:ident, $timXen:ident, $timXrst:ident),)+) => {
         $(
             impl PwmExt for $TIMX {
@@ -249,14 +211,13 @@ macro_rules! hal {
                 rcc.$apbXenr.modify(|_, w| w.$timXen().set_bit());
                 rcc.$apbXrstr.modify(|_, w| w.$timXrst().set_bit());
                 rcc.$apbXrstr.modify(|_, w| w.$timXrst().clear_bit());
-                                
+
                 let clk = clocks.$apb_clk().0;
                 let freq = freq.0;
                 let ticks = clk / freq;
                 let psc = u16((ticks - 1) / (1 << 16)).unwrap();
                 let arr = u16(ticks / u32(psc + 1)).unwrap();
 
-                PINS::init(&tim);
 
                 tim.psc.write(|w| unsafe { w.psc().bits(psc) });
                 tim.arr.write(|w| unsafe { w.arr().bits(arr) });
@@ -275,7 +236,7 @@ channels!(TIM5, PA0<Alternate<AF2>>, PA1<Alternate<AF2>>, PA2<Alternate<AF2>>, P
 channels!(TIM10, PA6<Alternate<AF3>>);
 channels!(TIM11, PA7<Alternate<AF3>>);
 
-hal! {
+timers! {
     TIM2: (apb1_clk, apb1enr, apb1rstr, tim2, tim2en, tim2rst),
     TIM3: (apb1_clk, apb1enr, apb1rstr, tim3, tim3en, tim3rst),
     TIM4: (apb1_clk, apb1enr, apb1rstr, tim4, tim4en, tim4rst),

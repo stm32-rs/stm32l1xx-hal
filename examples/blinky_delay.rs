@@ -9,7 +9,7 @@ extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
 use hal::delay::Delay;
-use hal::rcc::SysClockSource;
+use hal::rcc::SysClkSource;
 use hal::prelude::*;
 use hal::stm32;
 use rt::entry;
@@ -21,7 +21,7 @@ fn main() -> ! {
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr
-        .sys_clk_src(SysClockSource::HSI)
+        .sys_clk_src(SysClkSource::HSI)
         .freeze();
     let mut delay = Delay::new(cp.SYST, clocks);
 

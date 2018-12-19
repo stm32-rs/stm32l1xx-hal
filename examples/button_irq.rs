@@ -12,7 +12,6 @@ extern crate panic_semihosting;
 
 use core::cell::RefCell;
 use core::ops::DerefMut;
-use core::fmt::Write;
 use cortex_m::interrupt::Mutex;
 use hal::stm32::{self, Interrupt, EXTI};
 use rt::entry;

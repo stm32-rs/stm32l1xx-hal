@@ -5,14 +5,12 @@ use core::ptr;
 use hal;
 use hal::prelude::*;
 use nb::block;
+use stm32::{RCC, USART1, USART2, USART3};
 
-use crate::stm32::{RCC, USART1, USART2, USART3};
-
-use crate::gpio::gpioa::{PA2, PA3, PA10, PA9};
-use crate::gpio::gpiob::{PB10, PB11};
-
-use crate::gpio::{Alternate, AF7};
-use crate::rcc::Clocks;
+use gpio::gpioa::{PA2, PA3, PA10, PA9};
+use gpio::gpiob::{PB10, PB11};
+use gpio::{Alternate, AF7};
+use rcc::Clocks;
 
 /// Serial error
 #[derive(Debug)]

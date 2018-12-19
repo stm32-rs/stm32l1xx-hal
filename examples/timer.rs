@@ -12,7 +12,7 @@ extern crate panic_semihosting;
 
 use hal::prelude::*;
 use hal::timer::Timer;
-use hal::rcc::SysClockSource;
+use hal::rcc::SysClkSource;
 use hal::stm32;
 use rt::entry;
 
@@ -23,7 +23,7 @@ fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
     let mut cp = cortex_m::Peripherals::take().unwrap();
     let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.sys_clk_src(SysClockSource::HSI).freeze();
+    let clocks = rcc.cfgr.sys_clk_src(SysClkSource::HSI).freeze();
 
     let mut timer = Timer::tim2(dp.TIM2, 2.hz(), clocks);
     timer.listen(&mut cp.NVIC);
