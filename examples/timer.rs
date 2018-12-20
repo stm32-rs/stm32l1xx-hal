@@ -1,4 +1,4 @@
-#![deny(warnings)]
+// ![deny(warnings)]
 #![no_main]
 #![no_std]
 
@@ -9,11 +9,16 @@ extern crate cortex_m;
 extern crate cortex_m_rt as rt;
 extern crate panic_semihosting;
 
+use core::cell::RefCell;
+use core::ops::DerefMut;
+use cortex_m::interrupt::Mutex;
 use hal::prelude::*;
 use hal::timer::Timer;
 use hal::rcc::SysClkSource;
-use hal::stm32::{self, interrupt};
+use hal::stm32::{self, interrupt, Interrupt};
 use rt::entry;
+
+static TIMER: Mutex<RefCell<Option<Timer<stm32::TIM2>>>> = Mutex::new(RefCell::new(None));
 
 #[entry]
 fn main() -> ! {
@@ -22,16 +27,27 @@ fn main() -> ! {
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.sys_clk_src(SysClkSource::HSI).freeze();
 
-    let mut timer = Timer::tim2(dp.TIM2, 2.hz(), clocks);
-    timer.listen(&mut cp.NVIC);
-    timer.start(2.hz());
+    let mut timer = Timer::tim2(dp.TIM2, 1.hz(), clocks);
+    timer.listen();
+
+    cp.NVIC.enable(Interrupt::TIM2);
+    
+    cortex_m::interrupt::free(move |cs| {
+        *TIMER.borrow(cs).borrow_mut() = Some(timer);
+    });
 
     loop {}
 }
 
 #[interrupt]
 fn TIM2() {
-    static mut COUNT: i32 = 0;
-    *COUNT += 1;
-    hprintln!("TICK # {}", COUNT).unwrap();
+    static mut COUNTER: u32 = 0;
+    *COUNTER += 1;
+    hprintln!("{}", COUNTER).unwrap();
+
+    cortex_m::interrupt::free(|cs| {
+        if let &mut Some(ref mut timer) = TIMER.borrow(cs).borrow_mut().deref_mut() {
+           timer.clear_interrupt();
+        }
+    });
 }

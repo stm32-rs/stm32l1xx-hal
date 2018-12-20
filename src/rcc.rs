@@ -240,22 +240,22 @@ impl Config {
 
         let ahb_freq = match self.ahb_pre {
             AHBPrescaler::NotDivided => sys_clk,
-            pre => sys_clk / (1 << (pre as u8 + 1)),
+            pre => sys_clk / (1 << (pre as u8 - 7)),
         };
 
         let (apb1_freq, apb1_tim_freq) = match self.apb1_pre {
-            APBPrescaler::NotDivided => (sys_clk, sys_clk),
+            APBPrescaler::NotDivided => (ahb_freq, ahb_freq),
             pre => {
-                let freq = sys_clk / (1 << (pre as u8 + 1));
-                (freq, sys_clk * 2)
+                let freq = ahb_freq / (1 << (pre as u8 - 3));
+                (freq, freq * 2)
             }
         };
 
         let (apb2_freq, apb2_tim_freq) = match self.apb2_pre {
-            APBPrescaler::NotDivided => (sys_clk, sys_clk),
+            APBPrescaler::NotDivided => (ahb_freq, ahb_freq),
             pre => {
-                let freq = sys_clk / (1 << (pre as u8 + 1));
-                (freq, sys_clk * 2)
+                let freq = ahb_freq / (1 << (pre as u8 - 3));
+                (freq, freq * 2)
             }
         };
 
