@@ -14,7 +14,7 @@ use core::ops::DerefMut;
 use cortex_m::interrupt::Mutex;
 use hal::prelude::*;
 use hal::timer::Timer;
-use hal::rcc::SysClkSource;
+use hal::rcc::ClockSrc;
 use hal::stm32::{self, interrupt, Interrupt};
 use rt::entry;
 
@@ -25,7 +25,7 @@ fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
     let mut cp = cortex_m::Peripherals::take().unwrap();
     let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.sys_clk_src(SysClkSource::HSI).freeze();
+    let clocks = rcc.cfgr.clock_src(ClockSrc::HSI).freeze();
 
     let mut timer = Timer::tim2(dp.TIM2, 1.hz(), clocks);
     timer.listen();

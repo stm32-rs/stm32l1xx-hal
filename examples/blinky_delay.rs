@@ -9,7 +9,7 @@ extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
 use hal::delay::Delay;
-use hal::rcc::SysClkSource;
+use hal::rcc::ClockSrc;
 use hal::prelude::*;
 use hal::stm32;
 use rt::entry;
@@ -20,9 +20,7 @@ fn main() -> ! {
     let cp = cortex_m::Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr
-        .sys_clk_src(SysClkSource::HSI)
-        .freeze();
+    let clocks = rcc.cfgr.clock_src(ClockSrc::HSI).freeze();
     let mut delay = Delay::new(cp.SYST, clocks);
 
     let gpiob = dp.GPIOB.split();

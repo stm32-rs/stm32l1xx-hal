@@ -24,9 +24,12 @@ pub use stm32l1::stm32l162 as stm32;
 #[cfg(feature = "rt")]
 pub use stm32::interrupt;
 
+mod bb;
+
 pub mod dac;
 pub mod delay;
 pub mod gpio;
+pub mod exti;
 pub mod prelude;
 pub mod rcc;
 pub mod time;

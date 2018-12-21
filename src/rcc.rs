@@ -20,15 +20,15 @@ pub struct Rcc {
     pub cfgr: Config,
 }
 
-/// System clock input mux source
-pub enum SysClkSource {
+/// System clock mux source
+pub enum ClockSrc {
     MSI(MSIRange),
     PLL(PLLSource, PLLMul, PLLDiv),
     HSE(Hertz),
     HSI,
 }
 
-/// System clock input mux source
+/// MSI Range
 #[derive(Clone, Copy)]
 pub enum MSIRange {
     Range0 = 0,
@@ -101,7 +101,7 @@ pub enum PLLSource {
 
 /// Clocks configutation
 pub struct Config {
-    mux: SysClkSource,
+    mux: ClockSrc,
     ahb_pre: AHBPrescaler,
     apb1_pre: APBPrescaler,
     apb2_pre: APBPrescaler,
@@ -110,7 +110,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            mux: SysClkSource::MSI(MSIRange::default()),
+            mux: ClockSrc::MSI(MSIRange::default()),
             ahb_pre: AHBPrescaler::NotDivided,
             apb1_pre: APBPrescaler::NotDivided,
             apb2_pre: APBPrescaler::NotDivided,
@@ -119,7 +119,7 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn sys_clk_src(mut self, mux: SysClkSource) -> Self {
+    pub fn clock_src(mut self, mux: ClockSrc) -> Self {
         self.mux = mux;
         self
     }
@@ -142,7 +142,7 @@ impl Config {
     pub fn freeze(self) -> Clocks {
         let rcc = unsafe { &*RCC::ptr() };
         let (sys_clk, sw_bits) = match self.mux {
-            SysClkSource::MSI(range) => {
+            ClockSrc::MSI(range) => {
                 let range = range as u8;
                 // Set MSI range
                 rcc.icscr.write(|w| unsafe { w.msirange().bits(range) });
@@ -154,21 +154,21 @@ impl Config {
                 let freq = 32_768 * (1 << (range + 1));
                 (freq, 0)
             }
-            SysClkSource::HSI => {
+            ClockSrc::HSI => {
                 // Enable HSI
                 rcc.cr.write(|w| w.hsion().set_bit());
                 while rcc.cr.read().hsirdy().bit_is_clear() {}
 
                 (16_000_000, 1)
             }
-            SysClkSource::HSE(freq) => {
+            ClockSrc::HSE(freq) => {
                 // Enable HSE
                 rcc.cr.write(|w| w.hseon().set_bit());
                 while rcc.cr.read().hserdy().bit_is_clear() {}
 
                 (freq.0, 2)
             }
-            SysClkSource::PLL(src, mul, div) => {
+            ClockSrc::PLL(src, mul, div) => {
                 let (src_bit, freq) = match src {
                     PLLSource::HSE(freq) => {
                         // Enable HSE

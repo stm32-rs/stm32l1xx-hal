@@ -1,4 +1,3 @@
-// cargo run --example rtfm --features=stm32l100
 #![deny(warnings)]
 #![no_main]
 #![no_std]
@@ -16,10 +15,11 @@ use rtfm::app;
 
 use hal::prelude::*;
 use hal::stm32;
+use hal::exti::TriggerEdge;
 use hal::gpio::{Output, PushPull};
 use hal::gpio::gpiob::{PB6, PB7};
 use hal::timer::Timer;
-use hal::rcc::SysClkSource;
+use hal::rcc::ClockSrc;
 
 #[app(device = hal::stm32)]
 const APP: () = {
@@ -32,18 +32,13 @@ const APP: () = {
     #[init]
     fn init() {
         let rcc = device.RCC.constrain();
-        let clocks = rcc.cfgr
-            .sys_clk_src(SysClkSource::HSI)
-            .freeze();
-
-        device.EXTI.ftsr.modify(|_, w| w.tr0().set_bit());
-        device.EXTI.imr.modify(|_, w| w.mr0().set_bit());
-        device.SYSCFG.exticr1.modify(|_, w| unsafe { w.exti0().bits(0) });
-
-        let mut timer = Timer::tim2(device.TIM2, 1.hz(), clocks);
-        timer.listen();
+        let clocks = rcc.cfgr.clock_src(ClockSrc::HSI).freeze();
 
         let gpiob = device.GPIOB.split();
+        let mut timer = Timer::tim2(device.TIM2, 1.hz(), clocks);
+
+        timer.listen();
+        device.EXTI.listen(0, TriggerEdge::Rising);
 
         GREEN_LED = gpiob.pb7.into_push_pull_output();
         BLUE_LED = gpiob.pb6.into_push_pull_output();
@@ -53,20 +48,20 @@ const APP: () = {
 
     #[interrupt(resources = [TIMER, BLUE_LED, DELTA])]
     fn TIM2() {
-        resources.TIMER.clear_interrupt();
-        resources.BLUE_LED.toggle();
         *resources.DELTA += 1;
+
+        resources.BLUE_LED.toggle();
+        resources.TIMER.clear_interrupt();
     }
     
     #[interrupt(resources = [EXTI, GREEN_LED, DELTA])]
     fn EXTI0() {
-        resources.EXTI.pr.modify(|_, w| w.pr0().set_bit());
-        
         resources.GREEN_LED.set_high();
         hprintln!("Δ: {}", resources.DELTA).unwrap();
         resources.GREEN_LED.set_low();
-        
+
         *resources.DELTA = 0;
+        resources.EXTI.clear_interrupt(0);
     }
 
     #[idle]

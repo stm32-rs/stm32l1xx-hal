@@ -94,14 +94,14 @@ macro_rules! timers {
                     self.tim.dier.write(|w| w.uie().set_bit());
                 }
                 
-                /// Clears interrupt flag
-                pub fn clear_interrupt(&mut self) {
-                    self.tim.sr.write(|w| w.uif().clear_bit());
-                }
-
                 /// Stops listening
                 pub fn unlisten(&mut self) {
                     self.tim.dier.write(|w| w.uie().clear_bit());
+                }
+
+                /// Clears interrupt flag
+                pub fn clear_interrupt(&mut self) {
+                    self.tim.sr.write(|w| w.uif().clear_bit());
                 }
 
                 /// Releases the TIM peripheral
