@@ -28,13 +28,14 @@ mod bb;
 
 pub mod dac;
 pub mod delay;
-pub mod gpio;
 pub mod exti;
+pub mod gpio;
 pub mod prelude;
+pub mod pwm;
 pub mod rcc;
+pub mod serial;
 pub mod time;
 pub mod timer;
-pub mod pwm;
-pub mod serial;
+pub mod watchdog;
 // pub mod i2c;
 // pub mod spi;

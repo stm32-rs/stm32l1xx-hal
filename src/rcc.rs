@@ -159,7 +159,7 @@ impl Config {
                 rcc.cr.write(|w| w.hsion().set_bit());
                 while rcc.cr.read().hsirdy().bit_is_clear() {}
 
-                (16_000_000, 1)
+                (15_998_976, 1)
             }
             ClockSrc::HSE(freq) => {
                 // Enable HSE
@@ -180,17 +180,17 @@ impl Config {
                         // Enable HSI
                         rcc.cr.write(|w| w.hsion().set_bit());
                         while rcc.cr.read().hsirdy().bit_is_clear() {}
-                        (false, 16_000_000)
+                        (false, 15_998_976)
                     }
                 };
 
                 // Disable PLL
                 rcc.cr.write(|w| w.pllon().clear_bit());
                 while rcc.cr.read().pllrdy().bit_is_set() {}
-                
+
                 let mul_bytes = mul as u8;
                 let div_bytes = div as u8;
-                
+
                 let freq = match mul {
                     PLLMul::Mul3 => freq * 3,
                     PLLMul::Mul4 => freq * 4,
@@ -230,12 +230,12 @@ impl Config {
         rcc.cfgr.modify(|_, w| unsafe {
             w.sw()
                 .bits(sw_bits)
+                .hpre()
+                .bits(self.ahb_pre as u8)
                 .ppre1()
                 .bits(self.apb1_pre as u8)
                 .ppre2()
                 .bits(self.apb2_pre as u8)
-                .hpre()
-                .bits(self.ahb_pre as u8)
         });
 
         let ahb_freq = match self.ahb_pre {
@@ -293,7 +293,7 @@ impl Clocks {
     pub fn ahb_clk(&self) -> Hertz {
         self.ahb_clk
     }
-    
+
     /// Returns the frequency of the APB1
     pub fn apb1_clk(&self) -> Hertz {
         self.apb1_clk

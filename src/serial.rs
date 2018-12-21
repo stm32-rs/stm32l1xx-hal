@@ -7,7 +7,7 @@ use hal::prelude::*;
 use nb::block;
 use stm32::{RCC, USART1, USART2, USART3};
 
-use gpio::gpioa::{PA2, PA3, PA10, PA9};
+use gpio::gpioa::{PA10, PA2, PA3, PA9};
 use gpio::gpiob::{PB10, PB11};
 use gpio::{Alternate, AF7};
 use rcc::Clocks;
@@ -37,88 +37,86 @@ pub enum Event {
     Idle,
 }
 
-pub mod config {
-    use crate::time::Bps;
-    use crate::time::U32Ext;
+use crate::time::Bps;
+use crate::time::U32Ext;
 
-    pub enum WordLength {
-        DataBits8,
-        DataBits9,
+pub enum WordLength {
+    DataBits8,
+    DataBits9,
+}
+
+pub enum Parity {
+    ParityNone,
+    ParityEven,
+    ParityOdd,
+}
+
+pub enum StopBits {
+    #[doc = "1 stop bit"]
+    STOP1,
+    #[doc = "0.5 stop bits"]
+    STOP0P5,
+    #[doc = "2 stop bits"]
+    STOP2,
+    #[doc = "1.5 stop bits"]
+    STOP1P5,
+}
+
+pub struct Config {
+    pub baudrate: Bps,
+    pub wordlength: WordLength,
+    pub parity: Parity,
+    pub stopbits: StopBits,
+}
+
+impl Config {
+    pub fn baudrate(mut self, baudrate: Bps) -> Self {
+        self.baudrate = baudrate;
+        self
     }
 
-    pub enum Parity {
-        ParityNone,
-        ParityEven,
-        ParityOdd,
+    pub fn parity_none(mut self) -> Self {
+        self.parity = Parity::ParityNone;
+        self
     }
 
-    pub enum StopBits {
-        #[doc = "1 stop bit"]
-        STOP1,
-        #[doc = "0.5 stop bits"]
-        STOP0P5,
-        #[doc = "2 stop bits"]
-        STOP2,
-        #[doc = "1.5 stop bits"]
-        STOP1P5,
+    pub fn parity_even(mut self) -> Self {
+        self.parity = Parity::ParityEven;
+        self
     }
 
-    pub struct Config {
-        pub baudrate: Bps,
-        pub wordlength: WordLength,
-        pub parity: Parity,
-        pub stopbits: StopBits,
+    pub fn parity_odd(mut self) -> Self {
+        self.parity = Parity::ParityOdd;
+        self
     }
 
-    impl Config {
-        pub fn baudrate(mut self, baudrate: Bps) -> Self {
-            self.baudrate = baudrate;
-            self
-        }
-
-        pub fn parity_none(mut self) -> Self {
-            self.parity = Parity::ParityNone;
-            self
-        }
-
-        pub fn parity_even(mut self) -> Self {
-            self.parity = Parity::ParityEven;
-            self
-        }
-
-        pub fn parity_odd(mut self) -> Self {
-            self.parity = Parity::ParityOdd;
-            self
-        }
-
-        pub fn wordlength_8(mut self) -> Self {
-            self.wordlength = WordLength::DataBits8;
-            self
-        }
-
-        pub fn wordlength_9(mut self) -> Self {
-            self.wordlength = WordLength::DataBits9;
-            self
-        }
-
-        pub fn stopbits(mut self, stopbits: StopBits) -> Self {
-            self.stopbits = stopbits;
-            self
-        }
+    pub fn wordlength_8(mut self) -> Self {
+        self.wordlength = WordLength::DataBits8;
+        self
     }
 
-    #[derive(Debug)]
-    pub struct InvalidConfig;
+    pub fn wordlength_9(mut self) -> Self {
+        self.wordlength = WordLength::DataBits9;
+        self
+    }
 
-    impl Default for Config {
-        fn default() -> Config {
-            let baudrate = 19_200_u32.bps();
-            Config {
-                baudrate,
-                wordlength: WordLength::DataBits8,
-                parity: Parity::ParityNone,
-                stopbits: StopBits::STOP1,
-            }
+    pub fn stopbits(mut self, stopbits: StopBits) -> Self {
+        self.stopbits = stopbits;
+        self
+    }
+}
+
+#[derive(Debug)]
+pub struct InvalidConfig;
+
+impl Default for Config {
+    fn default() -> Config {
+        let baudrate = 19_200_u32.bps();
+        Config {
+            baudrate,
+            wordlength: WordLength::DataBits8,
+            parity: Parity::ParityNone,
+            stopbits: StopBits::STOP1,
         }
     }
 }
@@ -145,23 +143,34 @@ pub struct Tx<USART> {
     _usart: PhantomData<USART>,
 }
 
-macro_rules! halUsart {
+macro_rules! usart {
     ($(
-        $USARTX:ident: ($usartX:ident, $apbXenr:ident, $usartXen:ident,  $pclkX:ident),
+        $USARTX:ident: ($usartX:ident, $apbXenr:ident, $usartXen:ident, $pclkX:ident, $SerialExt:ident),
     )+) => {
         $(
+            pub trait $SerialExt<PINS> {
+                fn usart(self, pins: PINS, config: Config, clocks: Clocks) -> Result<Serial<$USARTX, PINS>, InvalidConfig>;
+            }
+
+            impl<PINS> $SerialExt<PINS> for $USARTX
+                where
+                    PINS: Pins<$USARTX>,
+            {
+                fn usart(self, pins: PINS, config: Config, clocks: Clocks) -> Result<Serial<$USARTX, PINS>, InvalidConfig> {
+                    Serial::$usartX(self, pins, config, clocks)
+                }
+            }
+
             impl<PINS> Serial<$USARTX, PINS> {
                 pub fn $usartX(
                     usart: $USARTX,
                     pins: PINS,
-                    config: config::Config,
+                    config: Config,
                     clocks: Clocks,
-                ) -> Result<Self, config::InvalidConfig>
+                ) -> Result<Self, InvalidConfig>
                 where
                     PINS: Pins<$USARTX>,
                 {
-                    use self::config::*;
-
                     // NOTE(unsafe) This executes only during initialisation
                     let rcc = unsafe { &(*RCC::ptr()) };
 
@@ -325,10 +334,10 @@ macro_rules! halUsart {
     }
 }
 
-halUsart! {
-    USART1: (usart1, apb2enr, usart1en, apb2_clk),
-    USART2: (usart2, apb1enr, usart2en, apb1_clk),
-    USART3: (usart3, apb1enr, usart3en, apb1_clk),
+usart! {
+    USART1: (usart1, apb2enr, usart1en, apb2_clk, Serial1Ext),
+    USART2: (usart2, apb1enr, usart2en, apb1_clk, Serial2Ext),
+    USART3: (usart3, apb1enr, usart3en, apb1_clk, Serial3Ext),
 }
 
 impl<USART> fmt::Write for Tx<USART>

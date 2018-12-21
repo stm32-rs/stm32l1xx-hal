@@ -1,5 +1,4 @@
 //! Bit banding
-
 use core::ptr;
 
 pub fn clear<T>(register: *const T, bit: u8) {

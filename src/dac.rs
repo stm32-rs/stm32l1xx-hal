@@ -2,9 +2,9 @@
 use cast::u32;
 use core::mem;
 
-use stm32::{RCC, DAC};
 use gpio::gpioa::{PA4, PA5};
-use gpio::{Input, Floating};
+use gpio::{Floating, Input};
+use stm32::{DAC, RCC};
 
 pub trait DacExt {
     fn dac<PINS>(self, pins: PINS) -> PINS::Output
@@ -82,25 +82,21 @@ macro_rules! dac {
                     (*DAC::ptr()).$dhrx.modify(|_, w| w.bits(u32(val)));
                 }
             }
-            
+
             fn get_value(&mut self) -> u16 {
-                unsafe {
-                    (*DAC::ptr()).$dhrx.read().$daccxdhr().bits()
-                }
+                unsafe { (*DAC::ptr()).$dhrx.read().$daccxdhr().bits() }
             }
         }
 
         impl DacOut<u8> for $CX {
             fn set_value(&mut self, val: u8) {
-                 unsafe {
+                unsafe {
                     (*DAC::ptr()).$dhrx.modify(|_, w| w.bits(u32(val)));
                 }
             }
 
             fn get_value(&mut self) -> u8 {
-                unsafe {
-                    (*DAC::ptr()).$dhrx.read().$daccxdhr().bits() as u8
-                }
+                unsafe { (*DAC::ptr()).$dhrx.read().$daccxdhr().bits() as u8 }
             }
         }
     };

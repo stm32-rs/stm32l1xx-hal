@@ -28,4 +28,3 @@ fn HardFault(ef: &ExceptionFrame) -> ! {
 fn DefaultHandler(irqn: i16) {
     panic!("Unhandled exception (IRQn = {})", irqn);
 }
-

@@ -19,16 +19,16 @@ fn main() -> ! {
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    
+
     let gpioa = dp.GPIOA.split();
-     
+
     let c1 = gpioa.pa0.into_alternate_af2();
     let mut pwm = dp.TIM5.pwm(c1, 10.khz(), clocks);
 
     let max = pwm.get_max_duty();
 
     pwm.enable();
-    
+
     // full
     pwm.set_duty(max);
     asm::bkpt();
@@ -41,5 +41,5 @@ fn main() -> ! {
     pwm.set_duty(0);
     asm::bkpt();
 
-    loop { }
+    loop {}
 }

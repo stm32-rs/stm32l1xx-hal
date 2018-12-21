@@ -8,11 +8,10 @@ extern crate cortex_m_rt as rt;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
+use hal::hal::Direction;
 use hal::prelude::*;
 use hal::stm32;
 use rt::entry;
-
-enum Dir { Up, Down }
 
 #[entry]
 fn main() -> ! {
@@ -21,21 +20,22 @@ fn main() -> ! {
     let gpioa = dp.GPIOA.split();
     let mut dac = dp.DAC.dac(gpioa.pa4);
 
+    let mut dir = Direction::Upcounting;
     let mut val: u16 = 0;
-    let mut dir = Dir::Up;
 
     dac.enable();
 
     loop {
         dac.set_value(val);
         match val {
-            0 => dir = Dir::Up,
-            4080 => dir = Dir::Down,
+            0 => dir = Direction::Upcounting,
+            4080 => dir = Direction::Downcounting,
             _ => (),
         };
+
         match dir {
-            Dir::Up => val += 1,
-            Dir::Down => val -= 1,
+            Direction::Upcounting => val += 1,
+            Direction::Downcounting => val -= 1,
         }
     }
 }

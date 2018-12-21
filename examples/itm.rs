@@ -16,7 +16,7 @@ fn main() -> ! {
     let p = cortex_m::Peripherals::take().unwrap();
     let mut itm = p.ITM;
     iprintln!(&mut itm.stim[0], "Hello, world!");
-    loop { }
+    loop {}
 }
 
 #[exception]
@@ -28,4 +28,3 @@ fn HardFault(ef: &ExceptionFrame) -> ! {
 fn DefaultHandler(irqn: i16) {
     panic!("Unhandled exception (IRQn = {})", irqn);
 }
-

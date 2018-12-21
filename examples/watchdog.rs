@@ -5,12 +5,15 @@
 
 extern crate cortex_m;
 extern crate cortex_m_rt as rt;
+extern crate cortex_m_semihosting as sh;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
 use hal::prelude::*;
+use hal::rcc::ClockSrc;
 use hal::stm32;
 use rt::entry;
+use sh::hprintln;
 
 #[entry]
 fn main() -> ! {
@@ -18,21 +21,19 @@ fn main() -> ! {
     let cp = cortex_m::Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
+    let clocks = rcc.cfgr.clock_src(ClockSrc::HSI).freeze();
     let mut delay = cp.SYST.delay(clocks);
 
-    let gpioa = dp.GPIOA.split();
-    let button = gpioa.pa0.into_pull_up_input();
+    hprintln!("Starting watchdog").unwrap();
 
-    let gpiob = dp.GPIOB.split();
-    let mut led = gpiob.pb6.into_push_pull_output();
+    //let mut watchdog = dp.WWDG.constrain(clocks);
+    let mut watchdog = dp.IWDG.constrain();
+    watchdog.start(100.ms());
 
-    loop {
-        if button.is_high() {
-            led.set_high();
-            delay.delay(500.ms());
-        } else {
-            led.set_low();
-        }
-    }
+    delay.delay(60.ms());
+    //delay.delay(120.ms());
+
+    cortex_m::asm::bkpt();
+
+    loop {}
 }

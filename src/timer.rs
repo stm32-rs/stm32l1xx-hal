@@ -11,6 +11,12 @@ use stm32::{RCC, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM9};
 use rcc::Clocks;
 use time::Hertz;
 
+pub trait TimerExt<TIM> {
+    fn timer<T>(self, timeout: T, clocks: Clocks) -> Timer<TIM>
+    where
+        T: Into<Hertz>;
+}
+
 /// Hardware timers
 pub struct Timer<TIM> {
     clocks: Clocks,
@@ -64,18 +70,35 @@ impl CountDown for Timer<SYST> {
     }
 }
 
+impl TimerExt<SYST> for SYST {
+    fn timer<T>(self, timeout: T, clocks: Clocks) -> Timer<SYST>
+    where
+        T: Into<Hertz>,
+    {
+        Timer::syst(self, timeout, clocks)
+    }
+}
+
 impl Periodic for Timer<SYST> {}
 
 macro_rules! timers {
     ($($TIM:ident: ($tim:ident, $timXen:ident, $timXrst:ident, $apbenr:ident, $apbrstr:ident, $timclk:ident),)+) => {
         $(
+            impl TimerExt<$TIM> for $TIM {
+                fn timer<T>(self, timeout: T, clocks: Clocks) -> Timer<$TIM>
+                    where
+                        T: Into<Hertz>,
+                {
+                    Timer::$tim(self, timeout, clocks)
+                }
+            }
+
             impl Timer<$TIM> {
                 /// Configures a TIM peripheral as a periodic count down timer
                 pub fn $tim<T>(tim: $TIM, timeout: T, clocks: Clocks) -> Self
                 where
                     T: Into<Hertz>,
                 {
-                    // enable and reset peripheral to a clean slate state
                     let rcc = unsafe { &(*RCC::ptr()) };
                     rcc.$apbenr.modify(|_, w| w.$timXen().set_bit());
                     rcc.$apbrstr.modify(|_, w| w.$timXrst().set_bit());
@@ -93,7 +116,7 @@ macro_rules! timers {
                 pub fn listen(&mut self) {
                     self.tim.dier.write(|w| w.uie().set_bit());
                 }
-                
+
                 /// Stops listening
                 pub fn unlisten(&mut self) {
                     self.tim.dier.write(|w| w.uie().clear_bit());
@@ -126,7 +149,7 @@ macro_rules! timers {
                     let freq = timeout.into().0;
                     let ticks = self.clocks.$timclk().0 / freq;
                     let psc = u16((ticks - 1) / (1 << 16)).unwrap();
-                    
+
                     self.tim.psc.write(|w| unsafe { w.psc().bits(psc) });
                     self.tim.arr.write(|w| unsafe { w.bits(ticks / u32(psc + 1)) });
 

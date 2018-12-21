@@ -12,29 +12,26 @@ extern crate stm32l1xx_hal as hal;
 
 use core::fmt::Write;
 use hal::prelude::*;
-use hal::stm32;
 use hal::rcc::ClockSrc;
-use hal::serial::Serial;
-use hal::serial::config::Config;
+use hal::serial::Config;
+use hal::stm32;
 use rt::entry;
 
 #[entry]
 fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
-    
+
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.clock_src(ClockSrc::HSI).freeze();
-    
+
     let gpiob = dp.GPIOB.split();
     let tx = gpiob.pb10.into_alternate_af7();
     let rx = gpiob.pb11.into_alternate_af7();
 
-    let serial = Serial::usart3(
-        dp.USART3,
-        (tx, rx),
-        Config::default(),
-        clocks
-    ).unwrap();
+    let serial = dp
+        .USART3
+        .usart((tx, rx), Config::default(), clocks)
+        .unwrap();
 
     let (mut tx, mut rx) = serial.split();
 

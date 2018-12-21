@@ -1,6 +1,6 @@
 //! External interrupt controller
-use stm32::EXTI;
 use bb;
+use stm32::EXTI;
 
 pub enum TriggerEdge {
     Rising,
@@ -11,7 +11,7 @@ pub enum TriggerEdge {
 pub trait ExtiExt {
     fn listen(&self, line: u8, edge: TriggerEdge);
     fn unlisten(&self, line: u8);
-    fn pend_interrupt(&self, line: u8) ;
+    fn pend_interrupt(&self, line: u8);
     fn clear_interrupt(&self, line: u8);
 }
 
@@ -24,7 +24,7 @@ impl ExtiExt for EXTI {
             TriggerEdge::All => {
                 bb::set(&self.rtsr, line);
                 bb::set(&self.ftsr, line);
-            },
+            }
         }
         bb::set(&self.imr, line);
     }
@@ -40,7 +40,7 @@ impl ExtiExt for EXTI {
         assert!(line < 24);
         bb::set(&self.swier, line);
     }
-    
+
     fn clear_interrupt(&self, line: u8) {
         assert!(line < 24);
         bb::set(&self.pr, line);

@@ -4,6 +4,17 @@ use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 use hal::blocking::delay::{DelayMs, DelayUs};
 use rcc::Clocks;
+use time::MicroSeconds;
+
+pub trait DelayExt {
+    fn delay(self, clocks: Clocks) -> Delay;
+}
+
+impl DelayExt for SYST {
+    fn delay(self, clocks: Clocks) -> Delay {
+        Delay::new(self, clocks)
+    }
+}
 
 /// System timer (SysTick) as a delay provider
 pub struct Delay {
@@ -19,6 +30,12 @@ impl Delay {
         assert!(freq > 1_000_000_u32);
         let ticks_per_us = freq / 1_000_000_u32;
         Delay { syst, ticks_per_us }
+    }
+    pub fn delay<T>(&mut self, delay: T)
+    where
+        T: Into<MicroSeconds>,
+    {
+        self.delay_us(delay.into().0)
     }
 
     /// Releases the system timer (SysTick) resource
