@@ -55,11 +55,11 @@ impl watchdog::WatchdogEnable for IndependedWatchdog {
 }
 
 pub trait IndependedWatchdogExt {
-    fn constrain(self) -> IndependedWatchdog;
+    fn watchdog(self) -> IndependedWatchdog;
 }
 
 impl IndependedWatchdogExt for IWDG {
-    fn constrain(self) -> IndependedWatchdog {
+    fn watchdog(self) -> IndependedWatchdog {
         IndependedWatchdog { iwdg: self }
     }
 }
@@ -121,11 +121,11 @@ impl watchdog::WatchdogEnable for WindowWatchdog {
 }
 
 pub trait WindowWatchdogExt {
-    fn constrain(self, clocks: Clocks) -> WindowWatchdog;
+    fn watchdog(self, clocks: Clocks) -> WindowWatchdog;
 }
 
 impl WindowWatchdogExt for WWDG {
-    fn constrain(self, clocks: Clocks) -> WindowWatchdog {
+    fn watchdog(self, clocks: Clocks) -> WindowWatchdog {
         // NOTE(unsafe) This executes only during initialisation
         let rcc = unsafe { &(*RCC::ptr()) };
         rcc.apb1enr.modify(|_, w| w.wwdgen().set_bit());

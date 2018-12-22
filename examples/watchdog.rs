@@ -26,8 +26,8 @@ fn main() -> ! {
 
     hprintln!("Starting watchdog").unwrap();
 
-    //let mut watchdog = dp.WWDG.constrain(clocks);
-    let mut watchdog = dp.IWDG.constrain();
+    //let mut watchdog = dp.WWDG.watchdog(clocks);
+    let mut watchdog = dp.IWDG.watchdog();
     watchdog.start(100.ms());
 
     delay.delay(60.ms());
