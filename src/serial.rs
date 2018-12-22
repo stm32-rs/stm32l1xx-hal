@@ -2,15 +2,14 @@ use core::fmt;
 use core::marker::PhantomData;
 use core::ptr;
 
+use crate::gpio::gpioa::{PA10, PA2, PA3, PA9};
+use crate::gpio::gpiob::{PB10, PB11};
+use crate::gpio::{Alternate, AF7};
+use crate::rcc::Clocks;
+use crate::stm32::{RCC, USART1, USART2, USART3};
 use hal;
 use hal::prelude::*;
 use nb::block;
-use stm32::{RCC, USART1, USART2, USART3};
-
-use gpio::gpioa::{PA10, PA2, PA3, PA9};
-use gpio::gpiob::{PB10, PB11};
-use gpio::{Alternate, AF7};
-use rcc::Clocks;
 
 /// Serial error
 #[derive(Debug)]

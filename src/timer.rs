@@ -6,10 +6,9 @@ use hal::timer::{CountDown, Periodic};
 use nb;
 use void::Void;
 
-use stm32::{RCC, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM9};
-
-use rcc::Clocks;
-use time::Hertz;
+use crate::rcc::Clocks;
+use crate::stm32::{RCC, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM9};
+use crate::time::Hertz;
 
 pub trait TimerExt<TIM> {
     fn timer<T>(self, timeout: T, clocks: Clocks) -> Timer<TIM>

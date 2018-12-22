@@ -1,5 +1,5 @@
-use stm32::RCC;
-use time::{Hertz, U32Ext};
+use crate::stm32::RCC;
+use crate::time::{Hertz, U32Ext};
 
 /// Extension trait that constrains the `RCC` peripheral
 pub trait RccExt {

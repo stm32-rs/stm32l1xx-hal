@@ -2,9 +2,9 @@
 use cast::u32;
 use core::mem;
 
-use gpio::gpioa::{PA4, PA5};
-use gpio::{Floating, Input};
-use stm32::{DAC, RCC};
+use crate::gpio::gpioa::{PA4, PA5};
+use crate::gpio::{Floating, Input};
+use crate::stm32::{DAC, RCC};
 
 pub trait DacExt {
     fn dac<PINS>(self, pins: PINS) -> PINS::Output

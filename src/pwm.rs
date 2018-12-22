@@ -1,16 +1,15 @@
 use core::marker::PhantomData;
 use core::mem;
 
+use crate::gpio::gpioa::{PA0, PA1, PA2, PA3, PA6, PA7};
+use crate::gpio::gpiob::{PB0, PB1, PB6, PB7, PB8, PB9};
+use crate::gpio::{Alternate, AF1, AF2, AF3};
+use crate::rcc::Clocks;
+use crate::stm32::RCC;
+use crate::stm32::{TIM10, TIM11, TIM2, TIM3, TIM4, TIM5};
+use crate::time::Hertz;
 use cast::{u16, u32};
 use hal;
-use stm32::RCC;
-use stm32::{TIM10, TIM11, TIM2, TIM3, TIM4, TIM5};
-
-use gpio::gpioa::{PA0, PA1, PA2, PA3, PA6, PA7};
-use gpio::gpiob::{PB0, PB1, PB6, PB7, PB8, PB9};
-use gpio::{Alternate, AF1, AF2, AF3};
-use rcc::Clocks;
-use time::Hertz;
 
 pub struct C1;
 pub struct C2;
@@ -22,7 +21,7 @@ pub trait Pins<TIM> {
 }
 
 pub trait PwmExt: Sized {
-    fn pwm<PINS, T>(self, PINS, frequency: T, clocks: Clocks) -> PINS::Channels
+    fn pwm<PINS, T>(self, _: PINS, frequency: T, clocks: Clocks) -> PINS::Channels
     where
         PINS: Pins<Self>,
         T: Into<Hertz>;
