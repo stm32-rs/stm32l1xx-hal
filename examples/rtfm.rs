@@ -51,7 +51,7 @@ const APP: () = {
         *resources.DELTA += 1;
 
         resources.TICKS_LED.toggle();
-        resources.TIMER.clear_interrupt();
+        resources.TIMER.clear_irq();
     }
 
     #[interrupt(resources = [EXTI, BUSY_LED, DELTA])]
@@ -61,7 +61,7 @@ const APP: () = {
         resources.BUSY_LED.set_low();
 
         *resources.DELTA = 0;
-        resources.EXTI.clear_interrupt(0);
+        resources.EXTI.clear_irq(0);
     }
 
     #[idle]

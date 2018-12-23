@@ -12,7 +12,7 @@ pub trait ExtiExt {
     fn listen(&self, line: u8, edge: TriggerEdge);
     fn unlisten(&self, line: u8);
     fn pend_interrupt(&self, line: u8);
-    fn clear_interrupt(&self, line: u8);
+    fn clear_irq(&self, line: u8);
 }
 
 impl ExtiExt for EXTI {
@@ -41,7 +41,7 @@ impl ExtiExt for EXTI {
         bb::set(&self.swier, line);
     }
 
-    fn clear_interrupt(&self, line: u8) {
+    fn clear_irq(&self, line: u8) {
         assert!(line < 24);
         bb::set(&self.pr, line);
     }

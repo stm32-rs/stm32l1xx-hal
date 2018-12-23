@@ -45,5 +45,3 @@ pub mod serial;
 pub mod time;
 pub mod timer;
 pub mod watchdog;
-// pub mod i2c;
-// pub mod spi;

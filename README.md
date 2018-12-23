@@ -1,6 +1,8 @@
 stm32l1xx-hal
 =============
 
+🚧 Work in progress.
+
 _stm32l1xx-hal_ contains a multi device hardware abstraction on top of the
 peripheral access API for the STMicro STM32L1 series microcontrollers. The
 selection of the MCU is done by feature gates, typically specified by board

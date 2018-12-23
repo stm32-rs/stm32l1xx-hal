@@ -1,4 +1,3 @@
-use crate::rcc::Clocks;
 use cortex_m::peripheral::DWT;
 
 #[derive(PartialEq, PartialOrd, Clone, Copy)]
@@ -6,12 +5,6 @@ pub struct Bps(pub u32);
 
 #[derive(PartialEq, PartialOrd, Clone, Copy)]
 pub struct Hertz(pub u32);
-
-#[derive(PartialEq, PartialOrd, Clone, Copy)]
-pub struct KiloHertz(pub u32);
-
-#[derive(PartialEq, PartialOrd, Clone, Copy)]
-pub struct MegaHertz(pub u32);
 
 #[derive(PartialEq, PartialOrd, Clone, Copy)]
 pub struct MicroSeconds(pub u32);
@@ -24,17 +17,23 @@ pub trait U32Ext {
     /// Wrap in `Hertz`
     fn hz(self) -> Hertz;
 
-    /// Wrap in `KiloHertz`
-    fn khz(self) -> KiloHertz;
+    /// Wrap in `Hertz`
+    fn khz(self) -> Hertz;
 
-    /// Wrap in `MegaHertz`
-    fn mhz(self) -> MegaHertz;
+    /// Wrap in `Hertz`
+    fn mhz(self) -> Hertz;
 
     /// Wrap in `MicroSeconds`
     fn us(self) -> MicroSeconds;
 
     /// Wrap in `MicroSeconds`
     fn ms(self) -> MicroSeconds;
+}
+
+pub trait MonoTimerExt {
+    fn monotonic<T>(self, sys_clk: T) -> MonoTimer
+    where
+        T: Into<Hertz>;
 }
 
 impl U32Ext for u32 {
@@ -46,12 +45,12 @@ impl U32Ext for u32 {
         Hertz(self)
     }
 
-    fn khz(self) -> KiloHertz {
-        KiloHertz(self)
+    fn khz(self) -> Hertz {
+        Hertz(self * 1_000)
     }
 
-    fn mhz(self) -> MegaHertz {
-        MegaHertz(self)
+    fn mhz(self) -> Hertz {
+        Hertz(self * 1_000_000)
     }
 
     fn ms(self) -> MicroSeconds {
@@ -79,24 +78,6 @@ impl Into<Hertz> for MicroSeconds {
     }
 }
 
-impl Into<Hertz> for KiloHertz {
-    fn into(self) -> Hertz {
-        Hertz(self.0 * 1_000)
-    }
-}
-
-impl Into<Hertz> for MegaHertz {
-    fn into(self) -> Hertz {
-        Hertz(self.0 * 1_000_000)
-    }
-}
-
-impl Into<KiloHertz> for MegaHertz {
-    fn into(self) -> KiloHertz {
-        KiloHertz(self.0 * 1_000)
-    }
-}
-
 /// A monotonic nondecreasing timer
 #[derive(Clone, Copy)]
 pub struct MonoTimer {
@@ -105,14 +86,17 @@ pub struct MonoTimer {
 
 impl MonoTimer {
     /// Creates a new `Monotonic` timer
-    pub fn new(mut dwt: DWT, clocks: Clocks) -> Self {
+    pub fn new<T>(mut dwt: DWT, sys_clk: T) -> Self
+    where
+        T: Into<Hertz>,
+    {
         dwt.enable_cycle_counter();
 
         // now the CYCCNT counter can't be stopped or resetted
         drop(dwt);
 
         MonoTimer {
-            frequency: clocks.sys_clk(),
+            frequency: sys_clk.into(),
         }
     }
 
@@ -129,6 +113,15 @@ impl MonoTimer {
     }
 }
 
+impl MonoTimerExt for DWT {
+    fn monotonic<T>(self, sys_clk: T) -> MonoTimer
+    where
+        T: Into<Hertz>,
+    {
+        MonoTimer::new(self, sys_clk)
+    }
+}
+
 /// A measurement of a monotonically nondecreasing clock
 #[derive(Clone, Copy)]
 pub struct Instant {
@@ -139,15 +132,5 @@ impl Instant {
     /// Ticks elapsed since the `Instant` was created
     pub fn elapsed(&self) -> u32 {
         DWT::get_cycle_count().wrapping_sub(self.now)
-    }
-}
-
-pub trait MonoTimerExt {
-    fn monotonic(self, clocks: Clocks) -> MonoTimer;
-}
-
-impl MonoTimerExt for DWT {
-    fn monotonic(self, clocks: Clocks) -> MonoTimer {
-        MonoTimer::new(self, clocks)
     }
 }

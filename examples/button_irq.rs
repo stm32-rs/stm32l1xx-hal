@@ -44,7 +44,7 @@ fn EXTI0() {
 
     cortex_m::interrupt::free(|cs| {
         if let &mut Some(ref mut exti) = INT.borrow(cs).borrow_mut().deref_mut() {
-            exti.clear_interrupt(0);
+            exti.clear_irq(0);
         }
     });
 }

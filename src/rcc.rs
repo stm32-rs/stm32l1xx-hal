@@ -99,6 +99,9 @@ pub enum PLLSource {
     HSE(Hertz),
 }
 
+/// HSI speed
+pub const HSI_FREQ: u32 = 15_998_976;
+
 /// Clocks configutation
 pub struct Config {
     mux: ClockSrc,
@@ -159,7 +162,7 @@ impl Config {
                 rcc.cr.write(|w| w.hsion().set_bit());
                 while rcc.cr.read().hsirdy().bit_is_clear() {}
 
-                (15_998_976, 1)
+                (HSI_FREQ, 1)
             }
             ClockSrc::HSE(freq) => {
                 // Enable HSE

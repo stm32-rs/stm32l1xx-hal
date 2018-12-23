@@ -47,7 +47,7 @@ fn TIM2() {
 
     cortex_m::interrupt::free(|cs| {
         if let Some(ref mut timer) = TIMER.borrow(cs).borrow_mut().deref_mut() {
-            timer.clear_interrupt();
+            timer.clear_irq();
         }
     });
 }

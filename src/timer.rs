@@ -122,7 +122,7 @@ macro_rules! timers {
                 }
 
                 /// Clears interrupt flag
-                pub fn clear_interrupt(&mut self) {
+                pub fn clear_irq(&mut self) {
                     self.tim.sr.write(|w| w.uif().clear_bit());
                 }
 
