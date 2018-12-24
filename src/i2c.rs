@@ -3,7 +3,7 @@
 use hal::blocking::i2c::{Read, Write, WriteRead};
 
 use crate::gpio::gpiob::{PB10, PB11, PB6, PB7};
-use crate::gpio::{Alternate, AF4};
+use crate::gpio::{AltMode, OpenDrain, Output};
 use crate::prelude::*;
 use crate::rcc::Clocks;
 use crate::stm32::{I2C1, I2C2, RCC};
@@ -16,20 +16,20 @@ pub struct I2c<I2C, PINS> {
 }
 
 pub trait Pins<I2c> {
-    fn init(self) -> Self;
+    fn init(&self);
 }
 
-impl Pins<I2C1> for (PB6<Alternate<AF4>>, PB7<Alternate<AF4>>) {
-    fn init(self) -> (PB6<Alternate<AF4>>, PB7<Alternate<AF4>>) {
-        let (scl, sda) = self;
-        (scl.set_open_drain(), sda.set_open_drain())
+impl Pins<I2C1> for (PB6<Output<OpenDrain>>, PB7<Output<OpenDrain>>) {
+    fn init(&self) {
+        self.0.set_alt_mode(AltMode::I2C);
+        self.1.set_alt_mode(AltMode::I2C);
     }
 }
 
-impl Pins<I2C2> for (PB10<Alternate<AF4>>, PB11<Alternate<AF4>>) {
-    fn init(self) -> (PB10<Alternate<AF4>>, PB11<Alternate<AF4>>) {
-        let (scl, sda) = self;
-        (scl.set_open_drain(), sda.set_open_drain())
+impl Pins<I2C2> for (PB10<Output<OpenDrain>>, PB11<Output<OpenDrain>>) {
+    fn init(&self) {
+        self.0.set_alt_mode(AltMode::I2C);
+        self.1.set_alt_mode(AltMode::I2C);
     }
 }
 
@@ -46,6 +46,7 @@ macro_rules! i2c {
             where
                 PINS: Pins<$I2CX>,
             {
+                pins.init();
                 let speed: Hertz = speed.into();
 
                 // NOTE(unsafe) This executes only during initialisation
@@ -122,10 +123,7 @@ macro_rules! i2c {
                 // Enable the I2C processing
                 i2c.cr1.modify(|_, w| w.pe().set_bit());
 
-                I2c {
-                    i2c,
-                    pins: pins.init(),
-                }
+                I2c { i2c, pins }
             }
 
             pub fn release(self) -> ($I2CX, PINS) {

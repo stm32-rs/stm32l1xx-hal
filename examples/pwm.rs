@@ -22,23 +22,23 @@ fn main() -> ! {
 
     let gpioa = dp.GPIOA.split();
 
-    let c1 = gpioa.pa0.into_alternate_af2();
+    let c1 = gpioa.pa0;
     let mut pwm = dp.TIM5.pwm(c1, 10.khz(), clocks);
 
     let max = pwm.get_max_duty();
 
     pwm.enable();
 
-    // full
     pwm.set_duty(max);
     asm::bkpt();
 
-    // dim
     pwm.set_duty(max / 2);
     asm::bkpt();
 
-    // zero
-    pwm.set_duty(0);
+    pwm.set_duty(max / 4);
+    asm::bkpt();
+
+    pwm.set_duty(max / 8);
     asm::bkpt();
 
     loop {}

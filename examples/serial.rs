@@ -25,8 +25,8 @@ fn main() -> ! {
     let clocks = rcc.cfgr.clock_src(ClockSrc::HSI).freeze();
 
     let gpiob = dp.GPIOB.split();
-    let tx = gpiob.pb10.into_alternate_af7();
-    let rx = gpiob.pb11.into_alternate_af7();
+    let tx = gpiob.pb10;
+    let rx = gpiob.pb11;
 
     let serial = dp
         .USART3

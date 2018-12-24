@@ -23,8 +23,8 @@ fn main() -> ! {
 
     let gpiob = dp.GPIOB.split();
 
-    let scl = gpiob.pb10.into_alternate_af4();
-    let sda = gpiob.pb11.into_alternate_af4();
+    let scl = gpiob.pb10.into_open_drain_output();
+    let sda = gpiob.pb11.into_open_drain_output();
 
     let mut i2c = dp.I2C2.i2c((scl, sda), 10.khz(), clocks);
 

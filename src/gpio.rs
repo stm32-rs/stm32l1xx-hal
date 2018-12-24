@@ -11,27 +11,6 @@ pub trait GpioExt {
     fn split(self) -> Self::Parts;
 }
 
-pub struct AF0;
-pub struct AF1;
-pub struct AF2;
-pub struct AF3;
-pub struct AF4;
-pub struct AF5;
-pub struct AF6;
-pub struct AF7;
-pub struct AF8;
-pub struct AF9;
-pub struct AF10;
-pub struct AF11;
-pub struct AF12;
-pub struct AF13;
-pub struct AF14;
-pub struct AF15;
-
-pub struct Alternate<MODE> {
-    _mode: PhantomData<MODE>,
-}
-
 /// Input mode (type state)
 pub struct Input<MODE> {
     _mode: PhantomData<MODE>,
@@ -65,6 +44,24 @@ pub enum Speed {
     VeryHigh = 3,
 }
 
+#[allow(dead_code)]
+pub(crate) enum AltMode {
+    SYSTEM = 0,
+    TIM2 = 1,
+    TIM3_5 = 2,
+    TIM9_11 = 3,
+    I2C = 4,
+    SPI1_2 = 5,
+    SPI3 = 6,
+    USART1_3 = 7,
+    UART4_5 = 8,
+    USB = 10,
+    LCD = 11,
+    FSMC = 12,
+    RI = 14,
+    EVENTOUT = 15,
+}
+
 macro_rules! gpio {
     ($GPIOX:ident, $gpiox:ident, $iopxenr:ident, $PXx:ident, [
         $($PXi:ident: ($pxi:ident, $i:expr, $MODE:ty),)+
@@ -77,9 +74,8 @@ macro_rules! gpio {
             use crate::stm32::$GPIOX;
             use crate::stm32::RCC;
             use super::{
-                Alternate, Floating, GpioExt, Input, OpenDrain, Output, Speed,
-                PullDown, PullUp, PushPull, AF0, AF1, AF2, AF3, AF4, AF5, AF6, AF7, AF8, AF9, AF10,
-                AF11, AF12, AF13, AF14, AF15
+                Floating, GpioExt, Input, OpenDrain, Output, Speed,
+                PullDown, PullUp, PushPull, AltMode
             };
 
             /// GPIO parts
@@ -159,27 +155,6 @@ macro_rules! gpio {
                 }
             }
 
-            fn set_alternate_mode (index: usize, mode: u32)
-            {
-                let offset = 2 * index;
-                let offset2 = 4 * index;
-                unsafe {
-                    if offset2 < 32 {
-                        &(*$GPIOX::ptr()).afrl.modify(|r, w| {
-                            w.bits((r.bits() & !(0b1111 << offset2)) | (mode << offset2))
-                        });
-                    } else {
-                        let offset2 = offset2 - 32;
-                        &(*$GPIOX::ptr()).afrh.modify(|r, w| {
-                            w.bits((r.bits() & !(0b1111 << offset2)) | (mode << offset2))
-                        });
-                    }
-                    &(*$GPIOX::ptr()).moder.modify(|r, w| {
-                        w.bits((r.bits() & !(0b11 << offset)) | (0b10 << offset))
-                    });
-                }
-            }
-
             $(
                 /// Pin
                 pub struct $PXi<MODE> {
@@ -187,134 +162,6 @@ macro_rules! gpio {
                 }
 
                 impl<MODE> $PXi<MODE> {
-                    /// Configures the pin to operate in AF0 mode
-                    pub fn into_alternate_af0(
-                        self,
-                    ) -> $PXi<Alternate<AF0>> {
-                        set_alternate_mode($i, 0);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF1 mode
-                    pub fn into_alternate_af1(
-                        self,
-                    ) -> $PXi<Alternate<AF1>> {
-                        set_alternate_mode($i, 1);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF2 mode
-                    pub fn into_alternate_af2(
-                        self,
-                    ) -> $PXi<Alternate<AF2>> {
-                        set_alternate_mode($i, 2);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF3 mode
-                    pub fn into_alternate_af3(
-                        self,
-                    ) -> $PXi<Alternate<AF3>> {
-                        set_alternate_mode($i, 3);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF4 mode
-                    pub fn into_alternate_af4(
-                        self,
-                    ) -> $PXi<Alternate<AF4>> {
-                        set_alternate_mode($i, 4);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF5 mode
-                    pub fn into_alternate_af5(
-                        self,
-                    ) -> $PXi<Alternate<AF5>> {
-                        set_alternate_mode($i, 5);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF6 mode
-                    pub fn into_alternate_af6(
-                        self,
-                    ) -> $PXi<Alternate<AF6>> {
-                        set_alternate_mode($i, 6);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF7 mode
-                    pub fn into_alternate_af7(
-                        self,
-                    ) -> $PXi<Alternate<AF7>> {
-                        set_alternate_mode($i, 7);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF8 mode
-                    pub fn into_alternate_af8(
-                        self,
-                    ) -> $PXi<Alternate<AF8>> {
-                        set_alternate_mode($i, 8);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF9 mode
-                    pub fn into_alternate_af9(
-                        self,
-                    ) -> $PXi<Alternate<AF9>> {
-                        set_alternate_mode($i, 9);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF10 mode
-                    pub fn into_alternate_af10(
-                        self,
-                    ) -> $PXi<Alternate<AF10>> {
-                        set_alternate_mode($i, 10);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF11 mode
-                    pub fn into_alternate_af11(
-                        self,
-                    ) -> $PXi<Alternate<AF11>> {
-                        set_alternate_mode($i, 11);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF12 mode
-                    pub fn into_alternate_af12(
-                        self,
-                    ) -> $PXi<Alternate<AF12>> {
-                        set_alternate_mode($i, 12);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF13 mode
-                    pub fn into_alternate_af13(
-                        self,
-                    ) -> $PXi<Alternate<AF13>> {
-                        set_alternate_mode($i, 13);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF14 mode
-                    pub fn into_alternate_af14(
-                        self,
-                    ) -> $PXi<Alternate<AF14>> {
-                        set_alternate_mode($i, 14);
-                        $PXi { _mode: PhantomData }
-                    }
-
-                    /// Configures the pin to operate in AF15 mode
-                    pub fn into_alternate_af15(
-                        self,
-                    ) -> $PXi<Alternate<AF15>> {
-                        set_alternate_mode($i, 15);
-                        $PXi { _mode: PhantomData }
-                    }
-
                     /// Configures the pin to operate as a floating input pin
                     pub fn into_floating_input(
                         self,
@@ -411,45 +258,27 @@ macro_rules! gpio {
                         };
                         self
                     }
-                }
 
-                impl $PXi<Output<OpenDrain>> {
-                    /// Enables / disables the internal pull up
-                    pub fn internal_pull_up(&mut self, on: bool) {
+                    #[allow(dead_code)]
+                    pub(crate) fn set_alt_mode(&self, mode: AltMode) {
+                        let mode = mode as u32;
                         let offset = 2 * $i;
-                        let value = if on { 0b01 } else { 0b00 };
+                        let offset2 = 4 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
-                                w.bits((r.bits() & !(0b11 << offset)) | (value << offset))
-                            })
-                        };
-                    }
-                }
-
-                impl<MODE> $PXi<Alternate<MODE>> {
-                    /// Enables / disables the internal pull up
-                    pub fn internal_pull_up(self, on: bool) -> Self {
-                        let offset = 2 * $i;
-                        let value = if on { 0b01 } else { 0b00 };
-                        unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
-                                w.bits((r.bits() & !(0b11 << offset)) | (value << offset))
-                            })
-                        };
-                        self
-                    }
-                }
-
-                impl<MODE> $PXi<Alternate<MODE>> {
-                    /// Turns pin alternate configuration pin into open drain
-                    pub fn set_open_drain(self) -> Self {
-                        let offset = $i;
-                        unsafe {
-                            &(*$GPIOX::ptr()).otyper.modify(|r, w| {
-                                w.bits(r.bits() | (1 << offset))
-                            })
-                        };
-                        self
+                            if offset2 < 32 {
+                                &(*$GPIOX::ptr()).afrl.modify(|r, w| {
+                                    w.bits((r.bits() & !(0b1111 << offset2)) | (mode << offset2))
+                                });
+                            } else {
+                                let offset2 = offset2 - 32;
+                                &(*$GPIOX::ptr()).afrh.modify(|r, w| {
+                                    w.bits((r.bits() & !(0b1111 << offset2)) | (mode << offset2))
+                                });
+                            }
+                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                                w.bits((r.bits() & !(0b11 << offset)) | (0b10 << offset))
+                            });
+                        }
                     }
                 }
 

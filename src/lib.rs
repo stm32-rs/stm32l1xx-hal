@@ -46,4 +46,6 @@ pub mod serial;
 pub mod spi;
 pub mod time;
 pub mod timer;
+#[cfg(any(feature = "stm32l151", feature = "stm32l152", feature = "stm32l162"))]
+pub mod tsc;
 pub mod watchdog;

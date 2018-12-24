@@ -3,7 +3,7 @@ use core::mem;
 
 use crate::gpio::gpioa::{PA0, PA1, PA2, PA3, PA6, PA7};
 use crate::gpio::gpiob::{PB0, PB1, PB6, PB7, PB8, PB9};
-use crate::gpio::{Alternate, AF1, AF2, AF3};
+use crate::gpio::{AltMode, Floating, Input};
 use crate::rcc::Clocks;
 use crate::stm32::RCC;
 use crate::stm32::{TIM10, TIM11, TIM2, TIM3, TIM4, TIM5};
@@ -18,6 +18,7 @@ pub struct C4;
 
 pub trait Pins<TIM> {
     type Channels;
+    fn init(&self);
 }
 
 pub trait PwmExt: Sized {
@@ -33,9 +34,13 @@ pub struct Pwm<TIM, CHANNEL> {
 }
 
 macro_rules! channels {
-    ($TIMX:ident, $c1:ty) => {
+    ($TIMX:ident, $af:expr, $c1:ty) => {
         impl Pins<$TIMX> for $c1 {
             type Channels = Pwm<$TIMX, C1>;
+
+            fn init(&self) {
+                self.set_alt_mode($af);
+            }
         }
 
         impl hal::PwmPin for Pwm<$TIMX, C1> {
@@ -69,23 +74,40 @@ macro_rules! channels {
             }
         }
     };
-    ($TIMX:ident, $c1:ty, $c2:ty, $c3:ty, $c4:ty) => {
-        channels!($TIMX, $c1);
+    ($TIMX:ident, $af:expr, $c1:ty, $c2:ty, $c3:ty, $c4:ty) => {
+        channels!($TIMX, $af, $c1);
 
         impl Pins<$TIMX> for $c2 {
             type Channels = Pwm<$TIMX, C2>;
+
+            fn init(&self) {
+                self.set_alt_mode($af);
+            }
         }
 
         impl Pins<$TIMX> for $c3 {
             type Channels = Pwm<$TIMX, C3>;
+
+            fn init(&self) {
+                self.set_alt_mode($af);
+            }
         }
 
         impl Pins<$TIMX> for $c4 {
             type Channels = Pwm<$TIMX, C4>;
+
+            fn init(&self) {
+                self.set_alt_mode($af);
+            }
         }
 
         impl Pins<$TIMX> for ($c1, $c2) {
             type Channels = (Pwm<$TIMX, C1>, Pwm<$TIMX, C2>);
+
+            fn init(&self) {
+                self.0.set_alt_mode($af);
+                self.1.set_alt_mode($af);
+            }
         }
 
         impl Pins<$TIMX> for ($c1, $c2, $c3, $c4) {
@@ -95,6 +117,13 @@ macro_rules! channels {
                 Pwm<$TIMX, C3>,
                 Pwm<$TIMX, C4>,
             );
+
+            fn init(&self) {
+                self.0.set_alt_mode($af);
+                self.1.set_alt_mode($af);
+                self.2.set_alt_mode($af);
+                self.3.set_alt_mode($af);
+            }
         }
 
         impl hal::PwmPin for Pwm<$TIMX, C2> {
@@ -198,7 +227,7 @@ macro_rules! timers {
             impl PwmExt for $TIMX {
                 fn pwm<PINS, T>(
                     self,
-                    _pins: PINS,
+                    pins: PINS,
                     freq: T,
                     clocks: Clocks,
                 ) -> PINS::Channels
@@ -206,22 +235,21 @@ macro_rules! timers {
                     PINS: Pins<Self>,
                     T: Into<Hertz>,
                 {
-                    //TODO: pin remap
-                    $timX(self, _pins, freq.into(), clocks)
+                    $timX(self, pins, freq.into(), clocks)
                 }
             }
 
             fn $timX<PINS>(
                 tim: $TIMX,
-                _pins: PINS,
+                pins: PINS,
                 freq: Hertz,
                 clocks: Clocks,
             ) -> PINS::Channels
             where
                 PINS: Pins<$TIMX>,
             {
+                pins.init();
                 let rcc = unsafe { &(*RCC::ptr()) };
-
                 rcc.$apbXenr.modify(|_, w| w.$timXen().set_bit());
                 rcc.$apbXrstr.modify(|_, w| w.$timXrst().set_bit());
                 rcc.$apbXrstr.modify(|_, w| w.$timXrst().clear_bit());
@@ -243,34 +271,38 @@ macro_rules! timers {
 
 channels!(
     TIM2,
-    PA0<Alternate<AF1>>,
-    PA1<Alternate<AF1>>,
-    PA2<Alternate<AF1>>,
-    PA3<Alternate<AF1>>
+    AltMode::TIM2,
+    PA0<Input<Floating>>,
+    PA1<Input<Floating>>,
+    PA2<Input<Floating>>,
+    PA3<Input<Floating>>
 );
 channels!(
     TIM3,
-    PA6<Alternate<AF2>>,
-    PA7<Alternate<AF2>>,
-    PB0<Alternate<AF2>>,
-    PB1<Alternate<AF2>>
+    AltMode::TIM3_5,
+    PA6<Input<Floating>>,
+    PA7<Input<Floating>>,
+    PB0<Input<Floating>>,
+    PB1<Input<Floating>>
 );
 channels!(
     TIM4,
-    PB6<Alternate<AF2>>,
-    PB7<Alternate<AF2>>,
-    PB8<Alternate<AF2>>,
-    PB9<Alternate<AF2>>
+    AltMode::TIM3_5,
+    PB6<Input<Floating>>,
+    PB7<Input<Floating>>,
+    PB8<Input<Floating>>,
+    PB9<Input<Floating>>
 );
 channels!(
     TIM5,
-    PA0<Alternate<AF2>>,
-    PA1<Alternate<AF2>>,
-    PA2<Alternate<AF2>>,
-    PA3<Alternate<AF2>>
+    AltMode::TIM3_5,
+    PA0<Input<Floating>>,
+    PA1<Input<Floating>>,
+    PA2<Input<Floating>>,
+    PA3<Input<Floating>>
 );
-channels!(TIM10, PA6<Alternate<AF3>>);
-channels!(TIM11, PA7<Alternate<AF3>>);
+channels!(TIM10, AltMode::TIM9_11, PA6<Input<Floating>>);
+channels!(TIM11, AltMode::TIM9_11, PA7<Input<Floating>>);
 
 timers! {
     TIM2: (apb1_clk, apb1enr, apb1rstr, tim2, tim2en, tim2rst),

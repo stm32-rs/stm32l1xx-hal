@@ -1,7 +1,7 @@
 use crate::gpio::gpioa::{PA11, PA12, PA5, PA6, PA7};
 use crate::gpio::gpiob::{PB13, PB14, PB15, PB3, PB4, PB5};
 use crate::gpio::gpioc::{PC10, PC11, PC12};
-use crate::gpio::{Alternate, AF5};
+use crate::gpio::{Floating, Input};
 use crate::rcc::Clocks;
 use crate::stm32::{RCC, SPI1, SPI2, SPI3};
 use crate::time::Hertz;
@@ -64,51 +64,51 @@ pins! {
     SPI1:
         SCK: [
             NoSck,
-            PA5<Alternate<AF5>>,
-            PB3<Alternate<AF5>>
+            PA5<Input<Floating>>,
+            PB3<Input<Floating>>
         ]
         MISO: [
             NoMiso,
-            PA6<Alternate<AF5>>,
-            PA11<Alternate<AF5>>,
-            PB4<Alternate<AF5>>
+            PA6<Input<Floating>>,
+            PA11<Input<Floating>>,
+            PB4<Input<Floating>>
         ]
         MOSI: [
             NoMosi,
-            PA7<Alternate<AF5>>,
-            PA12<Alternate<AF5>>,
-            PB5<Alternate<AF5>>
+            PA7<Input<Floating>>,
+            PA12<Input<Floating>>,
+            PB5<Input<Floating>>
         ]
 
     SPI2:
         SCK: [
             NoSck,
-            PB13<Alternate<AF5>>
+            PB13<Input<Floating>>
         ]
         MISO: [
             NoMiso,
-            PB14<Alternate<AF5>>
+            PB14<Input<Floating>>
         ]
         MOSI: [
             NoMosi,
-            PB15<Alternate<AF5>>
+            PB15<Input<Floating>>
         ]
 
     SPI3:
         SCK: [
             NoSck,
-            PB3<Alternate<AF5>>,
-            PC10<Alternate<AF5>>
+            PB3<Input<Floating>>,
+            PC10<Input<Floating>>
         ]
         MISO: [
             NoMiso,
-            PB4<Alternate<AF5>>,
-            PC11<Alternate<AF5>>
+            PB4<Input<Floating>>,
+            PC11<Input<Floating>>
         ]
         MOSI: [
             NoMosi,
-            PB5<Alternate<AF5>>,
-            PC12<Alternate<AF5>>
+            PB5<Input<Floating>>,
+            PC12<Input<Floating>>
         ]
 }
 

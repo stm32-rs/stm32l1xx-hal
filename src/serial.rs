@@ -4,7 +4,7 @@ use core::ptr;
 
 use crate::gpio::gpioa::{PA10, PA2, PA3, PA9};
 use crate::gpio::gpiob::{PB10, PB11};
-use crate::gpio::{Alternate, AF7};
+use crate::gpio::{AltMode, Floating, Input};
 use crate::rcc::Clocks;
 use crate::stm32::{RCC, USART1, USART2, USART3};
 use hal;
@@ -120,11 +120,30 @@ impl Default for Config {
     }
 }
 
-pub trait Pins<USART> {}
+pub trait Pins<USART> {
+    fn init(&self);
+}
 
-impl Pins<USART1> for (PA9<Alternate<AF7>>, PA10<Alternate<AF7>>) {}
-impl Pins<USART2> for (PA2<Alternate<AF7>>, PA3<Alternate<AF7>>) {}
-impl Pins<USART3> for (PB10<Alternate<AF7>>, PB11<Alternate<AF7>>) {}
+impl Pins<USART1> for (PA9<Input<Floating>>, PA10<Input<Floating>>) {
+    fn init(&self) {
+        self.0.set_alt_mode(AltMode::USART1_3);
+        self.1.set_alt_mode(AltMode::USART1_3);
+    }
+}
+
+impl Pins<USART2> for (PA2<Input<Floating>>, PA3<Input<Floating>>) {
+    fn init(&self) {
+        self.0.set_alt_mode(AltMode::USART1_3);
+        self.1.set_alt_mode(AltMode::USART1_3);
+    }
+}
+
+impl Pins<USART3> for (PB10<Input<Floating>>, PB11<Input<Floating>>) {
+    fn init(&self) {
+        self.0.set_alt_mode(AltMode::USART1_3);
+        self.1.set_alt_mode(AltMode::USART1_3);
+    }
+}
 
 /// Serial abstraction
 pub struct Serial<USART, PINS> {
