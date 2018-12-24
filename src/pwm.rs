@@ -231,13 +231,9 @@ macro_rules! timers {
                 let ticks = clk / freq;
                 let psc = u16((ticks - 1) / (1 << 16)).unwrap();
                 let arr = u16(ticks / u32(psc + 1)).unwrap();
-
                 tim.psc.write(|w| unsafe { w.psc().bits(psc) });
-
                 tim.arr.write(|w| unsafe { w.arr().bits(arr) });
-
                 tim.cr1.write(|w| w.cen().set_bit());
-
                 unsafe { mem::uninitialized() }
             }
         )+

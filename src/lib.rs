@@ -38,6 +38,7 @@ pub mod dac;
 pub mod delay;
 pub mod exti;
 pub mod gpio;
+pub mod i2c;
 pub mod prelude;
 pub mod pwm;
 pub mod rcc;
