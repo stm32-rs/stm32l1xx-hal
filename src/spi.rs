@@ -1,55 +1,15 @@
+use crate::gpio::gpioa::{PA11, PA12, PA5, PA6, PA7};
+use crate::gpio::gpiob::{PB13, PB14, PB15, PB3, PB4, PB5};
+use crate::gpio::gpioc::{PC10, PC11, PC12};
+use crate::gpio::{Alternate, AF5};
+use crate::rcc::Clocks;
+use crate::stm32::{RCC, SPI1, SPI2, SPI3};
+use crate::time::Hertz;
 use core::ptr;
-
 use hal;
-pub use hal::spi::{Mode, Phase, Polarity};
 use nb;
 
-use stm32::{RCC, SPI1, SPI2, SPI3};
-
-// #[cfg(any(feature = "stm32f401", feature = "stm32f407", feature = "stm32f429"))]
-// use gpio::gpioa::{PA5, PA6, PA7};
-
-// #[cfg(any(feature = "stm32f412", feature = "stm32f411"))]
-// use gpio::gpioa::{PA1, PA10, PA11, PA12, PA5, PA6, PA7};
-
-// #[cfg(any(feature = "stm32f401", feature = "stm32f407", feature = "stm32f429"))]
-// use gpio::gpiob::{PB10, PB13, PB14, PB15, PB3, PB4, PB5};
-
-// #[cfg(any(feature = "stm32f412", feature = "stm32f411"))]
-// use gpio::gpiob::{PB0, PB10, PB12, PB13, PB14, PB15, PB3, PB4, PB5, PB8};
-
-// #[cfg(any(feature = "stm32f401", feature = "stm32f407", feature = "stm32f429"))]
-// use gpio::gpioc::{PC10, PC11, PC12, PC2, PC3};
-
-// #[cfg(any(feature = "stm32f412", feature = "stm32f411"))]
-// use gpio::gpioc::{PC10, PC11, PC12, PC2, PC3, PC7};
-
-// #[cfg(any(feature = "stm32f401", feature = "stm32f412", feature = "stm32f429", feature = "stm32f411"))]
-// use gpio::gpiod::{PD3, PD6};
-
-// #[cfg(any(feature = "stm32f401", feature = "stm32f412", feature = "stm32f429", feature = "stm32f411"))]
-// use gpio::gpioe::{PE12, PE13, PE14, PE2, PE5, PE6};
-
-// #[cfg(feature = "stm32f429")]
-// use gpio::gpiof::{PF11, PF7, PF8, PF9};
-
-// #[cfg(feature = "stm32f429")]
-// use gpio::gpiog::{PG12, PG13, PG14};
-
-// #[cfg(feature = "stm32f429")]
-// use gpio::gpioh::{PH6, PH7};
-
-// #[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-// use gpio::gpioi::{PI1, PI2, PI3};
-
-// #[cfg(any(feature = "stm32f401", feature = "stm32f407", feature = "stm32f429"))]
-// use gpio::{Alternate, AF5, AF6};
-
-// #[cfg(any(feature = "stm32f412", feature = "stm32f411"))]
-// use gpio::{Alternate, AF5, AF6, AF7};
-
-use rcc::Clocks;
-use time::Hertz;
+pub use hal::spi::{Mode, Phase, Polarity, MODE_0, MODE_1, MODE_2, MODE_3};
 
 /// SPI error
 #[derive(Debug)]
@@ -110,157 +70,45 @@ pins! {
         MISO: [
             NoMiso,
             PA6<Alternate<AF5>>,
+            PA11<Alternate<AF5>>,
             PB4<Alternate<AF5>>
         ]
         MOSI: [
             NoMosi,
             PA7<Alternate<AF5>>,
+            PA12<Alternate<AF5>>,
             PB5<Alternate<AF5>>
         ]
 
     SPI2:
         SCK: [
             NoSck,
-            PB10<Alternate<AF5>>,
             PB13<Alternate<AF5>>
         ]
         MISO: [
             NoMiso,
-            PB14<Alternate<AF5>>,
-            PC2<Alternate<AF5>>
+            PB14<Alternate<AF5>>
         ]
         MOSI: [
             NoMosi,
-            PB15<Alternate<AF5>>,
-            PC3<Alternate<AF5>>
+            PB15<Alternate<AF5>>
         ]
 
     SPI3:
         SCK: [
             NoSck,
-            PB3<Alternate<AF6>>,
-            PC10<Alternate<AF6>>
+            PB3<Alternate<AF5>>,
+            PC10<Alternate<AF5>>
         ]
         MISO: [
             NoMiso,
-            PB4<Alternate<AF6>>,
-            PC11<Alternate<AF6>>
+            PB4<Alternate<AF5>>,
+            PC11<Alternate<AF5>>
         ]
         MOSI: [
             NoMosi,
-            PB5<Alternate<AF6>>,
-            PC12<Alternate<AF6>>
-        ]
-}
-
-#[cfg(any(
-    feature = "stm32f401",
-    feature = "stm32f411",
-    feature = "stm32f412",
-    feature = "stm32f429"
-))]
-pins! {
-    SPI2:
-        SCK: [PD3<Alternate<AF5>>]
-        MISO: []
-        MOSI: []
-    SPI3:
-        SCK: []
-        MISO: []
-        MOSI: [PD6<Alternate<AF5>>]
-    SPI4:
-        SCK: [
-            NoSck,
-            PE2<Alternate<AF5>>,
-            PE12<Alternate<AF5>>
-        ]
-        MISO: [
-            NoMiso,
-            PE5<Alternate<AF5>>,
-            PE13<Alternate<AF5>>
-        ]
-        MOSI: [
-            NoMosi,
-            PE6<Alternate<AF5>>,
-            PE14<Alternate<AF5>>
-        ]
-}
-
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-pins! {
-    SPI2:
-        SCK: [PI1<Alternate<AF5>>]
-        MISO: [PI2<Alternate<AF5>>]
-        MOSI: [PI3<Alternate<AF5>>]
-}
-
-#[cfg(any(feature = "stm32f412", feature = "stm32f411"))]
-pins! {
-    SPI2:
-        SCK: [PC7<Alternate<AF5>>]
-        MISO: []
-        MOSI: []
-    SPI3:
-        SCK: [PB12<Alternate<AF7>>]
-        MISO: []
-        MOSI: []
-    SPI4:
-        SCK: [PB13<Alternate<AF6>>]
-        MISO: [PA11<Alternate<AF6>>]
-        MOSI: [PA1<Alternate<AF5>>]
-    SPI5:
-        SCK: [
-            NoSck,
-            PB0<Alternate<AF6>>,
-            PE2<Alternate<AF6>>,
-            PE12<Alternate<AF6>>
-        ]
-        MISO: [
-            NoMiso,
-            PA12<Alternate<AF6>>,
-            PE5<Alternate<AF6>>,
-            PE13<Alternate<AF6>>
-        ]
-        MOSI: [
-            NoMosi,
-            PA10<Alternate<AF6>>,
-            PB8<Alternate<AF6>>,
-            PE6<Alternate<AF6>>,
-            PE14<Alternate<AF6>>
-        ]
-}
-
-#[cfg(feature = "stm32f429")]
-pins! {
-    SPI5:
-        SCK: [
-            NoSck,
-            PF7<Alternate<AF5>>,
-            PH6<Alternate<AF5>>
-        ]
-        MISO: [
-            NoMiso,
-            PF8<Alternate<AF5>>,
-            PH7<Alternate<AF5>>
-        ]
-        MOSI: [
-            NoMosi,
-            PF9<Alternate<AF5>>,
-            PF11<Alternate<AF5>>
-        ]
-
-    SPI6:
-        SCK: [
-            NoSck,
-            PG13<Alternate<AF5>>
-        ]
-        MISO: [
-            NoMiso,
-            PG12<Alternate<AF5>>
-        ]
-        MOSI: [
-            NoMosi,
-            PG14<Alternate<AF5>>
+            PB5<Alternate<AF5>>,
+            PC12<Alternate<AF5>>
         ]
 }
 
@@ -270,18 +118,28 @@ pub struct Spi<SPI, PINS> {
     pins: PINS,
 }
 
-macro_rules! hal {
+pub trait SpiExt<SPI>: Sized {
+    fn spi<PINS, T>(self, pins: PINS, mode: Mode, freq: T, clocks: Clocks) -> Spi<SPI, PINS>
+    where
+        PINS: Pins<SPI>,
+        T: Into<Hertz>;
+}
+
+macro_rules! spi {
     ($($SPIX:ident: ($spiX:ident, $apbXenr:ident, $spiXen:ident, $pclkX:ident),)+) => {
         $(
             impl<PINS> Spi<$SPIX, PINS> {
-                pub fn $spiX(
+                pub fn $spiX<T>(
                     spi: $SPIX,
                     pins: PINS,
                     mode: Mode,
-                    freq: Hertz,
+                    freq: T,
                     clocks: Clocks
                 ) -> Self
-                where PINS: Pins<$SPIX> {
+                where
+                PINS: Pins<$SPIX>,
+                T: Into<Hertz>
+                {
                     // NOTE(unsafe) This executes only during initialisation
                     let rcc = unsafe { &(*RCC::ptr()) };
 
@@ -291,7 +149,9 @@ macro_rules! hal {
                     // disable SS output
                     spi.cr2.write(|w| w.ssoe().clear_bit());
 
-                    let br = match clocks.$pclkX().0 / freq.0 {
+                    let spi_freq = freq.into().0;
+                    let apb_freq = clocks.$pclkX().0;
+                    let br = match apb_freq / spi_freq {
                         0 => unreachable!(),
                         1...2 => 0b000,
                         3...5 => 0b001,
@@ -341,6 +201,16 @@ macro_rules! hal {
                 pub fn free(self) -> ($SPIX, PINS) {
                     (self.spi, self.pins)
                 }
+            }
+
+            impl SpiExt<$SPIX> for $SPIX {
+                fn spi<PINS, T>(self, pins: PINS, mode: Mode, freq: T, clocks: Clocks) -> Spi<$SPIX, PINS>
+                where
+                    PINS: Pins<$SPIX>,
+                    T: Into<Hertz>
+                    {
+                        Spi::$spiX(self, pins, mode, freq, clocks)
+                    }
             }
 
             impl<PINS> hal::spi::FullDuplex<u8> for Spi<$SPIX, PINS> {
@@ -393,7 +263,7 @@ macro_rules! hal {
     }
 }
 
-hal! {
+spi! {
     SPI1: (spi1, apb2enr, spi1en, apb2_clk),
     SPI2: (spi2, apb1enr, spi2en, apb1_clk),
     SPI3: (spi3, apb1enr, spi3en, apb1_clk),

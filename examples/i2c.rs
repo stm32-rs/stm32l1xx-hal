@@ -20,16 +20,16 @@ fn main() -> ! {
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    
+
     let gpiob = dp.GPIOB.split();
 
     let scl = gpiob.pb10.into_alternate_af4();
     let sda = gpiob.pb11.into_alternate_af4();
-    
+
     let mut i2c = dp.I2C2.i2c((scl, sda), 10.khz(), clocks);
-    
+
     let mut buf: [u8; 1] = [0; 1];
-    
+
     loop {
         match i2c.read(0x60, &mut buf) {
             Ok(_) => hprintln!("Buf: {:?}", buf).unwrap(),

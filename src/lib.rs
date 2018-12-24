@@ -43,6 +43,7 @@ pub mod prelude;
 pub mod pwm;
 pub mod rcc;
 pub mod serial;
+pub mod spi;
 pub mod time;
 pub mod timer;
 pub mod watchdog;
