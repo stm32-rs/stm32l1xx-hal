@@ -6,12 +6,12 @@ use hal::timer::{CountDown, Periodic};
 use nb;
 use void::Void;
 
-use crate::rcc::Clocks;
-use crate::stm32::{RCC, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM9};
+use crate::rcc::{Clocks, Rcc};
+use crate::stm32::{TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM9};
 use crate::time::Hertz;
 
 pub trait TimerExt<TIM> {
-    fn timer<T>(self, timeout: T, clocks: Clocks) -> Timer<TIM>
+    fn timer<T>(self, timeout: T, rcc: &mut Rcc) -> Timer<TIM>
     where
         T: Into<Hertz>;
 }
@@ -24,12 +24,15 @@ pub struct Timer<TIM> {
 
 impl Timer<SYST> {
     /// Configures the SYST clock as a periodic count down timer
-    pub fn syst<T>(mut syst: SYST, timeout: T, clocks: Clocks) -> Self
+    pub fn syst<T>(mut syst: SYST, timeout: T, rcc: &mut Rcc) -> Self
     where
         T: Into<Hertz>,
     {
         syst.set_clock_source(SystClkSource::Core);
-        let mut timer = Timer { tim: syst, clocks };
+        let mut timer = Timer {
+            tim: syst,
+            clocks: rcc.clocks,
+        };
         timer.start(timeout);
         timer
     }
@@ -70,11 +73,11 @@ impl CountDown for Timer<SYST> {
 }
 
 impl TimerExt<SYST> for SYST {
-    fn timer<T>(self, timeout: T, clocks: Clocks) -> Timer<SYST>
+    fn timer<T>(self, timeout: T, rcc: &mut Rcc) -> Timer<SYST>
     where
         T: Into<Hertz>,
     {
-        Timer::syst(self, timeout, clocks)
+        Timer::syst(self, timeout, rcc)
     }
 }
 
@@ -84,28 +87,27 @@ macro_rules! timers {
     ($($TIM:ident: ($tim:ident, $timXen:ident, $timXrst:ident, $apbenr:ident, $apbrstr:ident, $timclk:ident),)+) => {
         $(
             impl TimerExt<$TIM> for $TIM {
-                fn timer<T>(self, timeout: T, clocks: Clocks) -> Timer<$TIM>
+                fn timer<T>(self, timeout: T, rcc: &mut Rcc) -> Timer<$TIM>
                     where
                         T: Into<Hertz>,
                 {
-                    Timer::$tim(self, timeout, clocks)
+                    Timer::$tim(self, timeout, rcc)
                 }
             }
 
             impl Timer<$TIM> {
                 /// Configures a TIM peripheral as a periodic count down timer
-                pub fn $tim<T>(tim: $TIM, timeout: T, clocks: Clocks) -> Self
+                pub fn $tim<T>(tim: $TIM, timeout: T, rcc: &mut Rcc) -> Self
                 where
                     T: Into<Hertz>,
                 {
-                    let rcc = unsafe { &(*RCC::ptr()) };
-                    rcc.$apbenr.modify(|_, w| w.$timXen().set_bit());
-                    rcc.$apbrstr.modify(|_, w| w.$timXrst().set_bit());
-                    rcc.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
+                    rcc.rcc.$apbenr.modify(|_, w| w.$timXen().set_bit());
+                    rcc.rcc.$apbrstr.modify(|_, w| w.$timXrst().set_bit());
+                    rcc.rcc.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
 
                     let mut timer = Timer {
-                        clocks,
                         tim,
+                        clocks: rcc.clocks,
                     };
                     timer.start(timeout);
                     timer

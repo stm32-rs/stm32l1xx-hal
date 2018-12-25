@@ -9,7 +9,7 @@ extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
 use hal::prelude::*;
-use hal::rcc::ClockSrc;
+use hal::rcc::Config;
 use hal::stm32;
 use rt::entry;
 
@@ -18,9 +18,8 @@ fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
     let cp = cortex_m::Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.clock_src(ClockSrc::HSI).freeze();
-    let mut delay = cp.SYST.delay(clocks);
+    let rcc = dp.RCC.freeze(Config::default());
+    let mut delay = cp.SYST.delay(rcc.clocks);
 
     let gpiob = dp.GPIOB.split();
     let mut led = gpiob.pb6.into_push_pull_output();

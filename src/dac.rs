@@ -4,20 +4,21 @@ use core::mem;
 
 use crate::gpio::gpioa::{PA4, PA5};
 use crate::gpio::{Floating, Input};
-use crate::stm32::{DAC, RCC};
+use crate::rcc::Rcc;
+use crate::stm32::DAC;
 
 pub trait DacExt {
-    fn dac<PINS>(self, pins: PINS) -> PINS::Output
+    fn dac<PINS>(self, pins: PINS, rcc: &mut Rcc) -> PINS::Output
     where
         PINS: Pins<DAC>;
 }
 
 impl DacExt for DAC {
-    fn dac<PINS>(self, pins: PINS) -> PINS::Output
+    fn dac<PINS>(self, pins: PINS, rcc: &mut Rcc) -> PINS::Output
     where
         PINS: Pins<DAC>,
     {
-        dac(self, pins)
+        dac(self, pins, rcc)
     }
 }
 
@@ -49,19 +50,16 @@ impl Pins<DAC> for (PA4<Input<Floating>>, PA5<Input<Floating>>) {
     type Output = (C1, C2);
 }
 
-pub fn dac<PINS>(_dac: DAC, _pins: PINS) -> PINS::Output
+pub fn dac<PINS>(_dac: DAC, _pins: PINS, rcc: &mut Rcc) -> PINS::Output
 where
     PINS: Pins<DAC>,
 {
-    // NOTE(unsafe) This executes only during initialisation
-    let rcc = unsafe { &(*RCC::ptr()) };
-
     // Enable DAC clocks
-    rcc.apb1enr.modify(|_, w| w.dacen().set_bit());
+    rcc.rcc.apb1enr.modify(|_, w| w.dacen().set_bit());
 
     // Reset DAC
-    rcc.apb1rstr.modify(|_, w| w.dacrst().set_bit());
-    rcc.apb1rstr.modify(|_, w| w.dacrst().clear_bit());
+    rcc.rcc.apb1rstr.modify(|_, w| w.dacrst().set_bit());
+    rcc.rcc.apb1rstr.modify(|_, w| w.dacrst().clear_bit());
 
     unsafe { mem::uninitialized() }
 }

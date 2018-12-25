@@ -5,9 +5,9 @@
 
 extern crate cortex_m;
 extern crate cortex_m_rt as rt;
-extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
+use core::panic::PanicInfo;
 use hal::prelude::*;
 use hal::stm32;
 use rt::entry;
@@ -26,4 +26,9 @@ fn main() -> ! {
             led.set_low();
         }
     }
+}
+
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    loop {}
 }

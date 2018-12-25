@@ -10,6 +10,7 @@ extern crate stm32l1xx_hal as hal;
 
 use hal::prelude::*;
 use hal::stm32;
+use hal::rcc::Config;
 use rt::entry;
 
 #[entry]
@@ -17,9 +18,8 @@ fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
     let cp = cortex_m::Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
-    let mut delay = cp.SYST.delay(clocks);
+    let rcc = dp.RCC.freeze(Config::hsi());
+    let mut delay = cp.SYST.delay(rcc.clocks);
 
     let gpioa = dp.GPIOA.split();
     let button = gpioa.pa0.into_pull_up_input();

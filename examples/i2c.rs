@@ -11,6 +11,7 @@ extern crate stm32l1xx_hal as hal;
 
 use hal::prelude::*;
 use hal::stm32;
+use hal::rcc::Config;
 use rt::entry;
 use sh::hprintln;
 
@@ -18,15 +19,14 @@ use sh::hprintln;
 fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
+    let mut rcc = dp.RCC.freeze(Config::hsi());
 
     let gpiob = dp.GPIOB.split();
 
     let scl = gpiob.pb10.into_open_drain_output();
     let sda = gpiob.pb11.into_open_drain_output();
 
-    let mut i2c = dp.I2C2.i2c((scl, sda), 10.khz(), clocks);
+    let mut i2c = dp.I2C2.i2c((scl, sda), 10.khz(), &mut rcc);
 
     let mut buf: [u8; 1] = [0; 1];
 

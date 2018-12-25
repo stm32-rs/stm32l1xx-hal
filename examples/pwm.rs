@@ -11,19 +11,19 @@ extern crate stm32l1xx_hal as hal;
 use cortex_m::asm;
 use hal::prelude::*;
 use hal::stm32;
+use hal::rcc::Config;
 use rt::entry;
 
 #[entry]
 fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
+    let mut rcc = dp.RCC.freeze(Config::hsi());
 
     let gpioa = dp.GPIOA.split();
 
     let c1 = gpioa.pa0;
-    let mut pwm = dp.TIM5.pwm(c1, 10.khz(), clocks);
+    let mut pwm = dp.TIM5.pwm(c1, 10.khz(), &mut rcc);
 
     let max = pwm.get_max_duty();
 

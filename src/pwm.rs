@@ -4,8 +4,7 @@ use core::mem;
 use crate::gpio::gpioa::{PA0, PA1, PA2, PA3, PA6, PA7};
 use crate::gpio::gpiob::{PB0, PB1, PB6, PB7, PB8, PB9};
 use crate::gpio::{AltMode, Floating, Input};
-use crate::rcc::Clocks;
-use crate::stm32::RCC;
+use crate::rcc::Rcc;
 use crate::stm32::{TIM10, TIM11, TIM2, TIM3, TIM4, TIM5};
 use crate::time::Hertz;
 use cast::{u16, u32};
@@ -18,11 +17,11 @@ pub struct C4;
 
 pub trait Pins<TIM> {
     type Channels;
-    fn init(&self);
+    fn setup(&self);
 }
 
 pub trait PwmExt: Sized {
-    fn pwm<PINS, T>(self, _: PINS, frequency: T, clocks: Clocks) -> PINS::Channels
+    fn pwm<PINS, T>(self, _: PINS, frequency: T, rcc: &mut Rcc) -> PINS::Channels
     where
         PINS: Pins<Self>,
         T: Into<Hertz>;
@@ -38,7 +37,7 @@ macro_rules! channels {
         impl Pins<$TIMX> for $c1 {
             type Channels = Pwm<$TIMX, C1>;
 
-            fn init(&self) {
+            fn setup(&self) {
                 self.set_alt_mode($af);
             }
         }
@@ -80,7 +79,7 @@ macro_rules! channels {
         impl Pins<$TIMX> for $c2 {
             type Channels = Pwm<$TIMX, C2>;
 
-            fn init(&self) {
+            fn setup(&self) {
                 self.set_alt_mode($af);
             }
         }
@@ -88,7 +87,7 @@ macro_rules! channels {
         impl Pins<$TIMX> for $c3 {
             type Channels = Pwm<$TIMX, C3>;
 
-            fn init(&self) {
+            fn setup(&self) {
                 self.set_alt_mode($af);
             }
         }
@@ -96,7 +95,7 @@ macro_rules! channels {
         impl Pins<$TIMX> for $c4 {
             type Channels = Pwm<$TIMX, C4>;
 
-            fn init(&self) {
+            fn setup(&self) {
                 self.set_alt_mode($af);
             }
         }
@@ -104,7 +103,7 @@ macro_rules! channels {
         impl Pins<$TIMX> for ($c1, $c2) {
             type Channels = (Pwm<$TIMX, C1>, Pwm<$TIMX, C2>);
 
-            fn init(&self) {
+            fn setup(&self) {
                 self.0.set_alt_mode($af);
                 self.1.set_alt_mode($af);
             }
@@ -118,7 +117,7 @@ macro_rules! channels {
                 Pwm<$TIMX, C4>,
             );
 
-            fn init(&self) {
+            fn setup(&self) {
                 self.0.set_alt_mode($af);
                 self.1.set_alt_mode($af);
                 self.2.set_alt_mode($af);
@@ -229,13 +228,13 @@ macro_rules! timers {
                     self,
                     pins: PINS,
                     freq: T,
-                    clocks: Clocks,
+                    rcc: &mut Rcc,
                 ) -> PINS::Channels
                 where
                     PINS: Pins<Self>,
                     T: Into<Hertz>,
                 {
-                    $timX(self, pins, freq.into(), clocks)
+                    $timX(self, pins, freq.into(), rcc)
                 }
             }
 
@@ -243,18 +242,17 @@ macro_rules! timers {
                 tim: $TIMX,
                 pins: PINS,
                 freq: Hertz,
-                clocks: Clocks,
+                rcc: &mut Rcc,
             ) -> PINS::Channels
             where
                 PINS: Pins<$TIMX>,
             {
-                pins.init();
-                let rcc = unsafe { &(*RCC::ptr()) };
-                rcc.$apbXenr.modify(|_, w| w.$timXen().set_bit());
-                rcc.$apbXrstr.modify(|_, w| w.$timXrst().set_bit());
-                rcc.$apbXrstr.modify(|_, w| w.$timXrst().clear_bit());
+                pins.setup();
+                rcc.rcc.$apbXenr.modify(|_, w| w.$timXen().set_bit());
+                rcc.rcc.$apbXrstr.modify(|_, w| w.$timXrst().set_bit());
+                rcc.rcc.$apbXrstr.modify(|_, w| w.$timXrst().clear_bit());
 
-                let clk = clocks.$apb_clk().0;
+                let clk = rcc.clocks.$apb_clk().0;
                 let freq = freq.0;
                 let ticks = clk / freq;
                 let psc = u16((ticks - 1) / (1 << 16)).unwrap();

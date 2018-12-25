@@ -3,14 +3,13 @@
 #![no_main]
 #![no_std]
 
-#[macro_use]
 extern crate cortex_m;
 extern crate cortex_m_rt as rt;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
+use cortex_m::iprintln;
 use rt::{entry, exception, ExceptionFrame};
-
 #[entry]
 fn main() -> ! {
     let p = cortex_m::Peripherals::take().unwrap();

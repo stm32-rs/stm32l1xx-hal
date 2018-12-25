@@ -5,8 +5,8 @@ use core::ptr;
 use crate::gpio::gpioa::{PA10, PA2, PA3, PA9};
 use crate::gpio::gpiob::{PB10, PB11};
 use crate::gpio::{AltMode, Floating, Input};
-use crate::rcc::Clocks;
-use crate::stm32::{RCC, USART1, USART2, USART3};
+use crate::rcc::Rcc;
+use crate::stm32::{USART1, USART2, USART3};
 use hal;
 use hal::prelude::*;
 use nb::block;
@@ -121,25 +121,25 @@ impl Default for Config {
 }
 
 pub trait Pins<USART> {
-    fn init(&self);
+    fn setup(&self);
 }
 
 impl Pins<USART1> for (PA9<Input<Floating>>, PA10<Input<Floating>>) {
-    fn init(&self) {
+    fn setup(&self) {
         self.0.set_alt_mode(AltMode::USART1_3);
         self.1.set_alt_mode(AltMode::USART1_3);
     }
 }
 
 impl Pins<USART2> for (PA2<Input<Floating>>, PA3<Input<Floating>>) {
-    fn init(&self) {
+    fn setup(&self) {
         self.0.set_alt_mode(AltMode::USART1_3);
         self.1.set_alt_mode(AltMode::USART1_3);
     }
 }
 
 impl Pins<USART3> for (PB10<Input<Floating>>, PB11<Input<Floating>>) {
-    fn init(&self) {
+    fn setup(&self) {
         self.0.set_alt_mode(AltMode::USART1_3);
         self.1.set_alt_mode(AltMode::USART1_3);
     }
@@ -167,15 +167,15 @@ macro_rules! usart {
     )+) => {
         $(
             pub trait $SerialExt<PINS> {
-                fn usart(self, pins: PINS, config: Config, clocks: Clocks) -> Result<Serial<$USARTX, PINS>, InvalidConfig>;
+                fn usart(self, pins: PINS, config: Config, rcc: &mut Rcc) -> Result<Serial<$USARTX, PINS>, InvalidConfig>;
             }
 
             impl<PINS> $SerialExt<PINS> for $USARTX
                 where
                     PINS: Pins<$USARTX>,
             {
-                fn usart(self, pins: PINS, config: Config, clocks: Clocks) -> Result<Serial<$USARTX, PINS>, InvalidConfig> {
-                    Serial::$usartX(self, pins, config, clocks)
+                fn usart(self, pins: PINS, config: Config, rcc: &mut Rcc) -> Result<Serial<$USARTX, PINS>, InvalidConfig> {
+                    Serial::$usartX(self, pins, config, rcc)
                 }
             }
 
@@ -184,19 +184,17 @@ macro_rules! usart {
                     usart: $USARTX,
                     pins: PINS,
                     config: Config,
-                    clocks: Clocks,
+                    rcc: &mut Rcc,
                 ) -> Result<Self, InvalidConfig>
                 where
                     PINS: Pins<$USARTX>,
                 {
-                    // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*RCC::ptr()) };
 
                     // Enable clock for USART
-                    rcc.$apbXenr.modify(|_, w| w.$usartXen().set_bit());
+                    rcc.rcc.$apbXenr.modify(|_, w| w.$usartXen().set_bit());
 
                     // Calculate correct baudrate divisor on the fly
-                    let div = (clocks.$pclkX().0 * 25) / (4 * config.baudrate.0);
+                    let div = (rcc.clocks.$pclkX().0 * 25) / (4 * config.baudrate.0);
                     let mantissa = div / 100;
                     let fraction = ((div - mantissa * 100) * 16 + 50) / 100;
                     usart

@@ -2,8 +2,8 @@ use crate::gpio::gpioa::{PA11, PA12, PA5, PA6, PA7};
 use crate::gpio::gpiob::{PB13, PB14, PB15, PB3, PB4, PB5};
 use crate::gpio::gpioc::{PC10, PC11, PC12};
 use crate::gpio::{Floating, Input};
-use crate::rcc::Clocks;
-use crate::stm32::{RCC, SPI1, SPI2, SPI3};
+use crate::rcc::Rcc;
+use crate::stm32::{SPI1, SPI2, SPI3};
 use crate::time::Hertz;
 use core::ptr;
 use hal;
@@ -119,7 +119,7 @@ pub struct Spi<SPI, PINS> {
 }
 
 pub trait SpiExt<SPI>: Sized {
-    fn spi<PINS, T>(self, pins: PINS, mode: Mode, freq: T, clocks: Clocks) -> Spi<SPI, PINS>
+    fn spi<PINS, T>(self, pins: PINS, mode: Mode, freq: T, rcc: &mut Rcc) -> Spi<SPI, PINS>
     where
         PINS: Pins<SPI>,
         T: Into<Hertz>;
@@ -134,23 +134,20 @@ macro_rules! spi {
                     pins: PINS,
                     mode: Mode,
                     freq: T,
-                    clocks: Clocks
+                    rcc: &mut Rcc
                 ) -> Self
                 where
                 PINS: Pins<$SPIX>,
                 T: Into<Hertz>
                 {
-                    // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*RCC::ptr()) };
-
                     // Enable clock for SPI
-                    rcc.$apbXenr.modify(|_, w| w.$spiXen().set_bit());
+                    rcc.rcc.$apbXenr.modify(|_, w| w.$spiXen().set_bit());
 
                     // disable SS output
                     spi.cr2.write(|w| w.ssoe().clear_bit());
 
                     let spi_freq = freq.into().0;
-                    let apb_freq = clocks.$pclkX().0;
+                    let apb_freq = rcc.clocks.$pclkX().0;
                     let br = match apb_freq / spi_freq {
                         0 => unreachable!(),
                         1...2 => 0b000,
@@ -204,12 +201,12 @@ macro_rules! spi {
             }
 
             impl SpiExt<$SPIX> for $SPIX {
-                fn spi<PINS, T>(self, pins: PINS, mode: Mode, freq: T, clocks: Clocks) -> Spi<$SPIX, PINS>
+                fn spi<PINS, T>(self, pins: PINS, mode: Mode, freq: T, rcc: &mut Rcc) -> Spi<$SPIX, PINS>
                 where
                     PINS: Pins<$SPIX>,
                     T: Into<Hertz>
                     {
-                        Spi::$spiX(self, pins, mode, freq, clocks)
+                        Spi::$spiX(self, pins, mode, freq, rcc)
                     }
             }
 

@@ -17,7 +17,7 @@ use hal::exti::TriggerEdge;
 use hal::gpio::gpiob::{PB6, PB7};
 use hal::gpio::{Output, PushPull};
 use hal::prelude::*;
-use hal::rcc::ClockSrc;
+use hal::rcc::Config;
 use hal::stm32;
 use hal::timer::Timer;
 
@@ -31,11 +31,10 @@ const APP: () = {
 
     #[init]
     fn init() {
-        let rcc = device.RCC.constrain();
-        let clocks = rcc.cfgr.clock_src(ClockSrc::HSI).freeze();
+        let mut rcc = device.RCC.freeze(Config::hsi());
 
         let gpiob = device.GPIOB.split();
-        let mut timer = device.TIM2.timer(1.hz(), clocks);
+        let mut timer = device.TIM2.timer(1.hz(), &mut rcc);
 
         timer.listen();
         device.EXTI.listen(0, TriggerEdge::Rising);

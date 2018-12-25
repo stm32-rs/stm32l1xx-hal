@@ -10,15 +10,15 @@ extern crate stm32l1xx_hal as hal;
 
 use hal::prelude::*;
 use hal::{spi, stm32};
+use hal::rcc::Config;
 use rt::entry;
 
 #[entry]
 fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
-
+    let mut rcc = dp.RCC.freeze(Config::hsi());
+    
     let gpiob = dp.GPIOB.split();
 
     let sck = gpiob.pb3;
@@ -27,7 +27,7 @@ fn main() -> ! {
 
     let mut spi = dp
         .SPI3
-        .spi((sck, miso, mosi), spi::MODE_0, 100.khz(), clocks);
+        .spi((sck, miso, mosi), spi::MODE_0, 100.khz(), &mut rcc);
 
     loop {
         spi.write(&[0, 1]).unwrap();

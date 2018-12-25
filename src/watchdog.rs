@@ -1,5 +1,5 @@
-use crate::rcc::Clocks;
-use crate::stm32::{IWDG, RCC, WWDG};
+use crate::rcc::Rcc;
+use crate::stm32::{IWDG, WWDG};
 use crate::time::Hertz;
 use hal::watchdog;
 
@@ -121,17 +121,15 @@ impl watchdog::WatchdogEnable for WindowWatchdog {
 }
 
 pub trait WindowWatchdogExt {
-    fn watchdog(self, clocks: Clocks) -> WindowWatchdog;
+    fn watchdog(self, rcc: &mut Rcc) -> WindowWatchdog;
 }
 
 impl WindowWatchdogExt for WWDG {
-    fn watchdog(self, clocks: Clocks) -> WindowWatchdog {
-        // NOTE(unsafe) This executes only during initialisation
-        let rcc = unsafe { &(*RCC::ptr()) };
-        rcc.apb1enr.modify(|_, w| w.wwdgen().set_bit());
+    fn watchdog(self, rcc: &mut Rcc) -> WindowWatchdog {
+        rcc.rcc.apb1enr.modify(|_, w| w.wwdgen().set_bit());
         WindowWatchdog {
             wwdg: self,
-            clk: clocks.apb1_clk().0 / 4096,
+            clk: rcc.clocks.apb1_clk().0 / 4096,
         }
     }
 }

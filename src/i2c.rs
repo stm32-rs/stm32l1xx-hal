@@ -1,12 +1,11 @@
 //! I2C
-
 use hal::blocking::i2c::{Read, Write, WriteRead};
 
 use crate::gpio::gpiob::{PB10, PB11, PB6, PB7};
 use crate::gpio::{AltMode, OpenDrain, Output};
 use crate::prelude::*;
-use crate::rcc::Clocks;
-use crate::stm32::{I2C1, I2C2, RCC};
+use crate::rcc::Rcc;
+use crate::stm32::{I2C1, I2C2};
 use crate::time::Hertz;
 
 /// I2C abstraction
@@ -16,18 +15,18 @@ pub struct I2c<I2C, PINS> {
 }
 
 pub trait Pins<I2c> {
-    fn init(&self);
+    fn setup(&self);
 }
 
 impl Pins<I2C1> for (PB6<Output<OpenDrain>>, PB7<Output<OpenDrain>>) {
-    fn init(&self) {
+    fn setup(&self) {
         self.0.set_alt_mode(AltMode::I2C);
         self.1.set_alt_mode(AltMode::I2C);
     }
 }
 
 impl Pins<I2C2> for (PB10<Output<OpenDrain>>, PB11<Output<OpenDrain>>) {
-    fn init(&self) {
+    fn setup(&self) {
         self.0.set_alt_mode(AltMode::I2C);
         self.1.set_alt_mode(AltMode::I2C);
     }
@@ -42,28 +41,25 @@ pub enum Error {
 macro_rules! i2c {
     ($I2CX:ident, $i2cx:ident, $i2cxen:ident, $i2crst:ident, $I2cxExt:ident) => {
         impl<PINS> I2c<$I2CX, PINS> {
-            pub fn $i2cx(i2c: $I2CX, pins: PINS, speed: Hertz, clocks: Clocks) -> Self
+            pub fn $i2cx(i2c: $I2CX, pins: PINS, speed: Hertz, rcc: &mut Rcc) -> Self
             where
                 PINS: Pins<$I2CX>,
             {
-                pins.init();
+                pins.setup();
                 let speed: Hertz = speed.into();
 
-                // NOTE(unsafe) This executes only during initialisation
-                let rcc = unsafe { &(*RCC::ptr()) };
-
                 // Enable clock for I2C
-                rcc.apb1enr.modify(|_, w| w.$i2cxen().set_bit());
+                rcc.rcc.apb1enr.modify(|_, w| w.$i2cxen().set_bit());
 
                 // Reset I2C
-                rcc.apb1rstr.modify(|_, w| w.$i2crst().set_bit());
-                rcc.apb1rstr.modify(|_, w| w.$i2crst().clear_bit());
+                rcc.rcc.apb1rstr.modify(|_, w| w.$i2crst().set_bit());
+                rcc.rcc.apb1rstr.modify(|_, w| w.$i2crst().clear_bit());
 
                 // Make sure the I2C unit is disabled so we can configure it
                 i2c.cr1.modify(|_, w| w.pe().clear_bit());
 
                 // Calculate settings for I2C speed modes
-                let clock = clocks.apb1_clk().0;
+                let clock = rcc.clocks.apb1_clk().0;
                 let freq = clock / 1_000_000;
                 assert!(freq >= 2 && freq <= 50);
 
@@ -267,19 +263,19 @@ macro_rules! i2c {
         }
 
         pub trait $I2cxExt {
-            fn i2c<PINS, T>(self, pins: PINS, speed: T, clocks: Clocks) -> I2c<$I2CX, PINS>
+            fn i2c<PINS, T>(self, pins: PINS, speed: T, rcc: &mut Rcc) -> I2c<$I2CX, PINS>
             where
                 PINS: Pins<$I2CX>,
                 T: Into<Hertz>;
         }
 
         impl $I2cxExt for $I2CX {
-            fn i2c<PINS, T>(self, pins: PINS, speed: T, clocks: Clocks) -> I2c<$I2CX, PINS>
+            fn i2c<PINS, T>(self, pins: PINS, speed: T, rcc: &mut Rcc) -> I2c<$I2CX, PINS>
             where
                 PINS: Pins<$I2CX>,
                 T: Into<Hertz>,
             {
-                I2c::$i2cx(self, pins, speed.into(), clocks)
+                I2c::$i2cx(self, pins, speed.into(), rcc)
             }
         }
     };

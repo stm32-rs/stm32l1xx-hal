@@ -11,15 +11,17 @@ extern crate stm32l1xx_hal as hal;
 use hal::hal::Direction;
 use hal::prelude::*;
 use hal::stm32;
+use hal::rcc::Config;
 use rt::entry;
 
 #[entry]
 fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.freeze(Config::hsi());
 
     let gpioa = dp.GPIOA.split();
-    let mut dac = dp.DAC.dac(gpioa.pa4);
-
+    let mut dac = dp.DAC.dac(gpioa.pa4, &mut rcc);
+    
     let mut dir = Direction::Upcounting;
     let mut val: u16 = 0;
 

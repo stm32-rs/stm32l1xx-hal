@@ -2,10 +2,9 @@
 #![no_main]
 #![no_std]
 
-#[macro_use]
-extern crate cortex_m_semihosting as sh;
 extern crate cortex_m;
 extern crate cortex_m_rt as rt;
+extern crate cortex_m_semihosting as sh;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
@@ -17,6 +16,7 @@ use hal::exti::TriggerEdge;
 use hal::prelude::*;
 use hal::stm32::{self, interrupt, Interrupt, EXTI};
 use rt::entry;
+use sh::hprintln;
 
 static INT: Mutex<RefCell<Option<EXTI>>> = Mutex::new(RefCell::new(None));
 
