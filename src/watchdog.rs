@@ -126,7 +126,7 @@ pub trait WindowWatchdogExt {
 
 impl WindowWatchdogExt for WWDG {
     fn watchdog(self, rcc: &mut Rcc) -> WindowWatchdog {
-        rcc.rcc.apb1enr.modify(|_, w| w.wwdgen().set_bit());
+        rcc.rb.apb1enr.modify(|_, w| w.wwdgen().set_bit());
         WindowWatchdog {
             wwdg: self,
             clk: rcc.clocks.apb1_clk().0 / 4096,

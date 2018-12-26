@@ -10,8 +10,8 @@ extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
 use hal::prelude::*;
-use hal::stm32;
 use hal::rcc::Config;
+use hal::stm32;
 use rt::entry;
 use sh::hprintln;
 

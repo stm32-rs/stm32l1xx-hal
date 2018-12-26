@@ -248,9 +248,9 @@ macro_rules! timers {
                 PINS: Pins<$TIMX>,
             {
                 pins.setup();
-                rcc.rcc.$apbXenr.modify(|_, w| w.$timXen().set_bit());
-                rcc.rcc.$apbXrstr.modify(|_, w| w.$timXrst().set_bit());
-                rcc.rcc.$apbXrstr.modify(|_, w| w.$timXrst().clear_bit());
+                rcc.rb.$apbXenr.modify(|_, w| w.$timXen().set_bit());
+                rcc.rb.$apbXrstr.modify(|_, w| w.$timXrst().set_bit());
+                rcc.rb.$apbXrstr.modify(|_, w| w.$timXrst().clear_bit());
 
                 let clk = rcc.clocks.$apb_clk().0;
                 let freq = freq.0;

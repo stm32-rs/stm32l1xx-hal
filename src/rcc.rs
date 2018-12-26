@@ -166,7 +166,7 @@ impl Config {
 /// RCC peripheral
 pub struct Rcc {
     pub clocks: Clocks,
-    pub(crate) rcc: RCC,
+    pub(crate) rb: RCC,
 }
 
 /// Extension trait that freezes the `RCC` peripheral with provided clocks configuration
@@ -303,7 +303,7 @@ impl RccExt for RCC {
             apb2_tim_clk: apb2_tim_freq.hz(),
         };
 
-        Rcc { rcc: self, clocks }
+        Rcc { rb: self, clocks }
     }
 }
 

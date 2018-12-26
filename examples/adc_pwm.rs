@@ -5,16 +5,12 @@
 
 extern crate cortex_m;
 extern crate cortex_m_rt as rt;
-extern crate nb;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
-use core::fmt::Write;
 use hal::prelude::*;
 use hal::rcc::Config;
-use hal::serial;
 use hal::stm32;
-use nb::block;
 use rt::entry;
 
 #[entry]
@@ -22,21 +18,18 @@ fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
 
     let mut rcc = dp.RCC.freeze(Config::hsi());
-
+    let gpioa = dp.GPIOA.split();
     let gpiob = dp.GPIOB.split();
-    let tx = gpiob.pb10;
-    let rx = gpiob.pb11;
-
-    let serial = dp
-        .USART3
-        .usart((tx, rx), serial::Config::default(), &mut rcc)
-        .unwrap();
-
-    let (mut tx, mut rx) = serial.split();
-
+    
+    let mut adc_pin = gpioa.pa1.into_analog();
+    let mut adc = dp.ADC.adc(&mut rcc);
+    
+    let mut pwm = dp.TIM4.pwm(gpiob.pb7, 1.khz(), &mut rcc);
+    let max_duty = pwm.get_max_duty() / 4095;
+    pwm.enable();
+    
     loop {
-        let received = block!(rx.read()).unwrap();
-        tx.write_str("\r\n").unwrap();
-        block!(tx.write(received)).ok();
+        let val: u16 = adc.read(&mut adc_pin).unwrap();
+        pwm.set_duty(max_duty * val);
     }
 }

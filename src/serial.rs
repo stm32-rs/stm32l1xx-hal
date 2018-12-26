@@ -191,7 +191,7 @@ macro_rules! usart {
                 {
 
                     // Enable clock for USART
-                    rcc.rcc.$apbXenr.modify(|_, w| w.$usartXen().set_bit());
+                    rcc.rb.$apbXenr.modify(|_, w| w.$usartXen().set_bit());
 
                     // Calculate correct baudrate divisor on the fly
                     let div = (rcc.clocks.$pclkX().0 * 25) / (4 * config.baudrate.0);

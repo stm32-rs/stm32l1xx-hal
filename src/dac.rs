@@ -7,21 +7,6 @@ use crate::gpio::{Floating, Input};
 use crate::rcc::Rcc;
 use crate::stm32::DAC;
 
-pub trait DacExt {
-    fn dac<PINS>(self, pins: PINS, rcc: &mut Rcc) -> PINS::Output
-    where
-        PINS: Pins<DAC>;
-}
-
-impl DacExt for DAC {
-    fn dac<PINS>(self, pins: PINS, rcc: &mut Rcc) -> PINS::Output
-    where
-        PINS: Pins<DAC>,
-    {
-        dac(self, pins, rcc)
-    }
-}
-
 pub struct C1;
 pub struct C2;
 
@@ -55,11 +40,11 @@ where
     PINS: Pins<DAC>,
 {
     // Enable DAC clocks
-    rcc.rcc.apb1enr.modify(|_, w| w.dacen().set_bit());
+    rcc.rb.apb1enr.modify(|_, w| w.dacen().set_bit());
 
     // Reset DAC
-    rcc.rcc.apb1rstr.modify(|_, w| w.dacrst().set_bit());
-    rcc.rcc.apb1rstr.modify(|_, w| w.dacrst().clear_bit());
+    rcc.rb.apb1rstr.modify(|_, w| w.dacrst().set_bit());
+    rcc.rb.apb1rstr.modify(|_, w| w.dacrst().clear_bit());
 
     unsafe { mem::uninitialized() }
 }
@@ -98,6 +83,21 @@ macro_rules! dac {
             }
         }
     };
+}
+
+pub trait DacExt {
+    fn dac<PINS>(self, pins: PINS, rcc: &mut Rcc) -> PINS::Output
+    where
+        PINS: Pins<DAC>;
+}
+
+impl DacExt for DAC {
+    fn dac<PINS>(self, pins: PINS, rcc: &mut Rcc) -> PINS::Output
+    where
+        PINS: Pins<DAC>,
+    {
+        dac(self, pins, rcc)
+    }
 }
 
 dac!(C1, en1, dhr12r1, dacc1dhr);

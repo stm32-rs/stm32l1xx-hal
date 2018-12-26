@@ -101,9 +101,9 @@ macro_rules! timers {
                 where
                     T: Into<Hertz>,
                 {
-                    rcc.rcc.$apbenr.modify(|_, w| w.$timXen().set_bit());
-                    rcc.rcc.$apbrstr.modify(|_, w| w.$timXrst().set_bit());
-                    rcc.rcc.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
+                    rcc.rb.$apbenr.modify(|_, w| w.$timXen().set_bit());
+                    rcc.rb.$apbrstr.modify(|_, w| w.$timXrst().set_bit());
+                    rcc.rb.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
 
                     let mut timer = Timer {
                         tim,

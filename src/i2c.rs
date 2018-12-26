@@ -49,11 +49,11 @@ macro_rules! i2c {
                 let speed: Hertz = speed.into();
 
                 // Enable clock for I2C
-                rcc.rcc.apb1enr.modify(|_, w| w.$i2cxen().set_bit());
+                rcc.rb.apb1enr.modify(|_, w| w.$i2cxen().set_bit());
 
                 // Reset I2C
-                rcc.rcc.apb1rstr.modify(|_, w| w.$i2crst().set_bit());
-                rcc.rcc.apb1rstr.modify(|_, w| w.$i2crst().clear_bit());
+                rcc.rb.apb1rstr.modify(|_, w| w.$i2crst().set_bit());
+                rcc.rb.apb1rstr.modify(|_, w| w.$i2crst().clear_bit());
 
                 // Make sure the I2C unit is disabled so we can configure it
                 i2c.cr1.modify(|_, w| w.pe().clear_bit());

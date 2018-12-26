@@ -20,7 +20,7 @@ fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
 
     let mut rcc = dp.RCC.freeze(Config::hsi());
-    
+
     let gpiob = dp.GPIOB.split();
     let mut led = gpiob.pb6.into_push_pull_output();
 

@@ -141,7 +141,7 @@ macro_rules! spi {
                 T: Into<Hertz>
                 {
                     // Enable clock for SPI
-                    rcc.rcc.$apbXenr.modify(|_, w| w.$spiXen().set_bit());
+                    rcc.rb.$apbXenr.modify(|_, w| w.$spiXen().set_bit());
 
                     // disable SS output
                     spi.cr2.write(|w| w.ssoe().clear_bit());
@@ -167,7 +167,8 @@ macro_rules! spi {
                     // dff: 8 bit frames
                     // bidimode: 2-line unidirectional
                     // spe: enable the SPI bus
-                    spi.cr1.write(|w| {
+                    #[allow(unused)]
+                    spi.cr1.write(|w| unsafe {
                         w.cpha()
                             .bit(mode.phase == Phase::CaptureOnSecondTransition)
                             .cpol()

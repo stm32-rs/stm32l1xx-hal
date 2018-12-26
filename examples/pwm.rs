@@ -10,8 +10,8 @@ extern crate stm32l1xx_hal as hal;
 
 use cortex_m::asm;
 use hal::prelude::*;
-use hal::stm32;
 use hal::rcc::Config;
+use hal::stm32;
 use rt::entry;
 
 #[entry]

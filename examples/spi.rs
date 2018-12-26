@@ -9,8 +9,8 @@ extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
 use hal::prelude::*;
-use hal::{spi, stm32};
 use hal::rcc::Config;
+use hal::{spi, stm32};
 use rt::entry;
 
 #[entry]
@@ -18,7 +18,7 @@ fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
 
     let mut rcc = dp.RCC.freeze(Config::hsi());
-    
+
     let gpiob = dp.GPIOB.split();
 
     let sck = gpiob.pb3;
