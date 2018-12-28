@@ -103,39 +103,80 @@ impl Adc {
     fn power_down(&mut self) {
         self.rb.cr2.modify(|_, w| w.adon().clear_bit());
     }
+}
 
-    fn convert(&mut self, chan: u8) -> u16 {
-        // self.rb
-        //     .smprx
-        //     .write(|w| unsafe { w.bits(self.sample_time as u8) });
-        self.rb
-            .cr1
-            .modify(|_, w| unsafe { w.res().bits(self.precision as u8) });
-        self.rb.sqr5.write(|w| unsafe { w.sq1().bits(chan) });
-        self.rb
-            .cr2
-            .modify(|_, w| w.align().bit(self.align == Align::Left).swstart().set_bit());
-        while self.rb.sr.read().eoc().bit_is_clear() {}
-
-        let res = self.rb.dr.read().bits() as u16;
-        if self.align == Align::Left && self.precision == Precision::B_6 {
-            res << 8
-        } else {
-            res
-        }
-    }
+pub trait AdcChannel {
+    fn setup(&mut self, adc: &mut Adc);
 }
 
 macro_rules! adc_pins {
-    ($($pin:ty => $chan:expr),+ $(,)*) => {
+    ($($Chan:ty: ($pin:ty, $bank_b:tt, $chan:expr, $smprx:ident)),+ $(,)*) => {
         $(
             impl Channel<Adc> for $pin {
                 type ID = u8;
 
                 fn channel() -> u8 { $chan }
             }
+
+            impl AdcChannel for $pin {
+                fn setup(&mut self, adc: &mut Adc) {
+                    adc.rb.cr2.modify(|_, w| w.adc_cfg().bit($bank_b));
+                    adc.rb.$smprx.modify(|r, w| unsafe {
+                        const OFFSET: u8 = 3 * $chan % 10;
+                        let mut bits = r.smp().bits() as u32;
+                        bits &= !(0xfff << OFFSET);
+                        bits |= (adc.sample_time as u32) << OFFSET;
+                        w.bits(bits)
+                    });
+                    adc.rb.sqr5.write(|w| unsafe { w.sq1().bits($chan) });
+                }
+            }
         )+
     };
+}
+
+adc_pins! {
+    Channel0: (gpioa::PA0<Analog>, false, 0_u8, smpr3),
+    Channel1: (gpioa::PA1<Analog>, false, 1_u8, smpr3),
+    Channel2: (gpioa::PA2<Analog>, false, 2_u8, smpr3),
+    Channel3: (gpioa::PA3<Analog>, false, 3_u8, smpr3),
+    Channel4: (gpioa::PA4<Analog>, false, 4_u8, smpr3),
+    Channel5: (gpioa::PA5<Analog>, false, 5_u8, smpr3),
+    Channel6: (gpioa::PA6<Analog>, false, 6_u8, smpr3),
+    Channel7: (gpioa::PA7<Analog>, false, 7_u8, smpr3),
+    Channel8: (gpiob::PB0<Analog>, false, 8_u8, smpr3),
+    Channel9: (gpiob::PB1<Analog>, false, 9_u8, smpr3),
+    Channel10: (gpioc::PC0<Analog>, false, 10_u8, smpr2),
+    Channel11: (gpioc::PC1<Analog>, false, 11_u8, smpr2),
+    Channel12: (gpioc::PC2<Analog>, false, 12_u8, smpr2),
+    Channel13: (gpioc::PC3<Analog>, false, 13_u8, smpr2),
+    Channel14: (gpioc::PC4<Analog>, false, 14_u8, smpr2),
+    Channel15: (gpioc::PC5<Analog>, false, 15_u8, smpr2),
+    Channel18: (gpiob::PB12<Analog>, false, 18_u8, smpr2),
+    Channel19: (gpiob::PB13<Analog>, false, 19_u8, smpr2),
+    Channel20: (gpiob::PB14<Analog>, false, 20_u8, smpr1),
+    Channel21: (gpiob::PB15<Analog>, false, 21_u8, smpr1),
+    Channel22: (gpioe::PE7<Analog>, false, 22_u8, smpr1),
+    Channel23: (gpioe::PE8<Analog>, false, 23_u8, smpr1),
+    Channel24: (gpioe::PE9<Analog>, false, 24_u8, smpr1),
+    Channel25: (gpioe::PE10<Analog>, false, 25_u8, smpr1),
+    Channel27: (gpiof::PF6<Analog>, false, 27_u8, smpr1),
+    Channel28: (gpiof::PF7<Analog>, false, 28_u8, smpr1),
+    Channel29: (gpiof::PF8<Analog>, false, 29_u8, smpr1),
+    Channel30: (gpiof::PF9<Analog>, false, 30_u8, smpr1),
+    Channel31: (gpiof::PF10<Analog>, false, 31_u8, smpr1),
+
+    Channel0b: (gpiob::PB2<Analog>, true, 0_u8, smpr3),
+    Channel1b: (gpiof::PF11<Analog>, true, 1_u8, smpr3),
+    Channel2b: (gpiof::PF12<Analog>, true, 2_u8, smpr3),
+    Channel3b: (gpiof::PF13<Analog>, true, 3_u8, smpr3),
+    Channel6b: (gpiof::PF14<Analog>, true, 6_u8, smpr3),
+    Channel7b: (gpiof::PF15<Analog>, true, 7_u8, smpr3),
+    Channel8b: (gpiog::PG0<Analog>, true, 8_u8, smpr3),
+    Channel9b: (gpiog::PG1<Analog>, true, 9_u8, smpr3),
+    Channel10b: (gpiog::PG2<Analog>, true, 10_u8, smpr2),
+    Channel11b: (gpiog::PG3<Analog>, true, 11_u8, smpr2),
+    Channel12b: (gpiog::PG4<Analog>, true, 12_u8, smpr2),
 }
 
 impl VTemp {
@@ -172,25 +213,50 @@ impl VRef {
     }
 }
 
-adc_pins!(
-    gpioa::PA0<Analog> => 0_u8,
-    gpioa::PA1<Analog> => 1_u8,
-    VTemp => 16_u8,
-    VRef  => 17_u8,
-);
+impl Channel<Adc> for VTemp {
+    type ID = u8;
+
+    fn channel() -> u8 {
+        16
+    }
+}
+
+impl Channel<Adc> for VRef {
+    type ID = u8;
+
+    fn channel() -> u8 {
+        17
+    }
+}
 
 impl<WORD, PIN> OneShot<Adc, WORD, PIN> for Adc
 where
     WORD: From<u16>,
-    PIN: Channel<Adc, ID = u8>,
+    PIN: AdcChannel + Channel<Adc, ID = u8>,
 {
     type Error = ();
 
-    fn read(&mut self, _pin: &mut PIN) -> nb::Result<WORD, Self::Error> {
+    fn read(&mut self, pin: &mut PIN) -> nb::Result<WORD, Self::Error> {
         self.power_up();
-        let res = self.convert(PIN::channel());
+        pin.setup(self);
+
+        self.rb
+            .cr1
+            .modify(|_, w| unsafe { w.res().bits(self.precision as u8) });
+        self.rb
+            .cr2
+            .modify(|_, w| w.align().bit(self.align == Align::Left).swstart().set_bit());
+        while self.rb.sr.read().eoc().bit_is_clear() {}
+
+        let res = self.rb.dr.read().bits() as u16;
+        let val = if self.align == Align::Left && self.precision == Precision::B_6 {
+            res << 8
+        } else {
+            res
+        };
+
         self.power_down();
-        Ok(res.into())
+        Ok(val.into())
     }
 }
 

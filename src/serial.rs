@@ -146,9 +146,10 @@ impl Pins<USART3> for (PB10<Input<Floating>>, PB11<Input<Floating>>) {
 }
 
 /// Serial abstraction
-pub struct Serial<USART, PINS> {
+pub struct Serial<USART> {
     usart: USART,
-    pins: PINS,
+    rx: Rx<USART>,
+    tx: Tx<USART>,
 }
 
 /// Serial receiver
@@ -167,20 +168,20 @@ macro_rules! usart {
     )+) => {
         $(
             pub trait $SerialExt<PINS> {
-                fn usart(self, pins: PINS, config: Config, rcc: &mut Rcc) -> Result<Serial<$USARTX, PINS>, InvalidConfig>;
+                fn usart(self, pins: PINS, config: Config, rcc: &mut Rcc) -> Result<Serial<$USARTX>, InvalidConfig>;
             }
 
             impl<PINS> $SerialExt<PINS> for $USARTX
                 where
                     PINS: Pins<$USARTX>,
             {
-                fn usart(self, pins: PINS, config: Config, rcc: &mut Rcc) -> Result<Serial<$USARTX, PINS>, InvalidConfig> {
+                fn usart(self, pins: PINS, config: Config, rcc: &mut Rcc) -> Result<Serial<$USARTX>, InvalidConfig> {
                     Serial::$usartX(self, pins, config, rcc)
                 }
             }
 
-            impl<PINS> Serial<$USARTX, PINS> {
-                pub fn $usartX(
+            impl Serial<$USARTX> {
+                pub fn $usartX<PINS>(
                     usart: $USARTX,
                     pins: PINS,
                     config: Config,
@@ -189,6 +190,7 @@ macro_rules! usart {
                 where
                     PINS: Pins<$USARTX>,
                 {
+                    pins.setup();
 
                     // Enable clock for USART
                     rcc.rb.$apbXenr.modify(|_, w| w.$usartXen().set_bit());
@@ -237,7 +239,11 @@ macro_rules! usart {
                             StopBits::STOP1P5 => 0b11,
                         })
                     });
-                    Ok(Serial { usart, pins })
+                    Ok(Serial {
+                        usart,
+                        tx: Tx { _usart: PhantomData },
+                        rx: Rx { _usart: PhantomData },
+                    })
                 }
 
                 /// Starts listening for an interrupt event
@@ -270,18 +276,39 @@ macro_rules! usart {
                     }
                 }
 
-                pub fn split(self) -> (Tx<$USARTX>, Rx<$USARTX>) {
-                    (
-                        Tx {
-                            _usart: PhantomData,
-                        },
-                        Rx {
-                            _usart: PhantomData,
-                        },
-                    )
+                /// Clears interrupt flag
+                pub fn clear_irq(&mut self, event: Event) {
+                    if let Event::Rxne = event {
+                       self.usart.sr.modify(|_, w| w.rxne().clear_bit()) 
+                    }
                 }
-                pub fn release(self) -> ($USARTX, PINS) {
-                    (self.usart, self.pins)
+
+                pub fn split(self) -> (Tx<$USARTX>, Rx<$USARTX>) {
+                    (self.tx, self.rx)
+                }
+
+                pub fn release(self) -> $USARTX {
+                    self.usart
+                }
+            }
+
+            impl hal::serial::Read<u8> for Serial<$USARTX> {
+                type Error = Error;
+
+                fn read(&mut self) -> nb::Result<u8, Error> {
+                    self.rx.read()
+                }
+            }
+
+             impl hal::serial::Write<u8> for  Serial<$USARTX> {
+                type Error = Error;
+
+                fn flush(&mut self) -> nb::Result<(), Self::Error> {
+                    self.tx.flush()
+                }
+
+                fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
+                    self.tx.write(byte)
                 }
             }
 
@@ -354,6 +381,20 @@ usart! {
     USART1: (usart1, apb2enr, usart1en, apb2_clk, Serial1Ext),
     USART2: (usart2, apb1enr, usart2en, apb1_clk, Serial2Ext),
     USART3: (usart3, apb1enr, usart3en, apb1_clk, Serial3Ext),
+}
+
+impl<USART> fmt::Write for Serial<USART>
+where
+    Serial<USART>: hal::serial::Write<u8>,
+{
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        let _ = s
+            .as_bytes()
+            .into_iter()
+            .map(|c| block!(self.write(*c)))
+            .last();
+        Ok(())
+    }
 }
 
 impl<USART> fmt::Write for Tx<USART>
