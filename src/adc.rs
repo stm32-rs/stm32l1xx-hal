@@ -156,6 +156,10 @@ adc_pins! {
     Channel19: (gpiob::PB13<Analog>, false, 19_u8, smpr2),
     Channel20: (gpiob::PB14<Analog>, false, 20_u8, smpr1),
     Channel21: (gpiob::PB15<Analog>, false, 21_u8, smpr1),
+}
+
+#[cfg(not(feature = "stm32l100"))]
+adc_pins! {
     Channel22: (gpioe::PE7<Analog>, false, 22_u8, smpr1),
     Channel23: (gpioe::PE8<Analog>, false, 23_u8, smpr1),
     Channel24: (gpioe::PE9<Analog>, false, 24_u8, smpr1),
@@ -165,7 +169,6 @@ adc_pins! {
     Channel29: (gpiof::PF8<Analog>, false, 29_u8, smpr1),
     Channel30: (gpiof::PF9<Analog>, false, 30_u8, smpr1),
     Channel31: (gpiof::PF10<Analog>, false, 31_u8, smpr1),
-
     Channel0b: (gpiob::PB2<Analog>, true, 0_u8, smpr3),
     Channel1b: (gpiof::PF11<Analog>, true, 1_u8, smpr3),
     Channel2b: (gpiof::PF12<Analog>, true, 2_u8, smpr3),
