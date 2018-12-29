@@ -37,6 +37,7 @@ mod bb;
 pub mod adc;
 pub mod dac;
 pub mod delay;
+pub mod dma;
 pub mod exti;
 pub mod gpio;
 pub mod i2c;

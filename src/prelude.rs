@@ -9,6 +9,7 @@ pub use crate::dac::DacExt as _stm32f4xx_hal_analog_DacExt;
 pub use crate::dac::DacOut as _stm32f4xx_hal_analog_DacOut;
 pub use crate::dac::DacPin as _stm32f4xx_hal_analog_DacPin;
 pub use crate::delay::DelayExt as _stm32f4xx_hal_delay_DelayExt;
+pub use crate::dma::DmaExt as _stm32f4xx_hal_dma_DmaExt;
 pub use crate::exti::ExtiExt as _stm32f4xx_hal_exti_ExtiExt;
 pub use crate::gpio::GpioExt as _stm32f4xx_hal_gpio_GpioExt;
 pub use crate::i2c::I2c1Ext as _stm32f4xx_hal_i2c1_I2cExt;

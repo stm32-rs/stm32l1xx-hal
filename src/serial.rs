@@ -279,7 +279,7 @@ macro_rules! usart {
                 /// Clears interrupt flag
                 pub fn clear_irq(&mut self, event: Event) {
                     if let Event::Rxne = event {
-                       self.usart.sr.modify(|_, w| w.rxne().clear_bit()) 
+                       self.usart.sr.modify(|_, w| w.rxne().clear_bit())
                     }
                 }
 
