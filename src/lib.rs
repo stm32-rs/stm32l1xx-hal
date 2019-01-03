@@ -41,6 +41,7 @@ pub mod dma;
 pub mod exti;
 pub mod gpio;
 pub mod i2c;
+pub mod lcd;
 pub mod prelude;
 pub mod pwm;
 pub mod qei;

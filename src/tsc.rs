@@ -1,6 +1,7 @@
 //! Touch sense controller
 use crate::gpio::gpiob::{PB4, PB5, PB6, PB7};
 use crate::gpio::{OpenDrain, Output, PushPull};
+use crate::rcc::Rcc;
 use crate::stm32::TSC;
 
 #[derive(Debug)]
@@ -15,8 +16,6 @@ pub enum Event {
 pub enum Error {
     /// Max count error
     MaxCountError,
-    /// Wrong GPIO for reading
-    InvalidPin,
 }
 
 pub enum TscPrescaler {
@@ -30,20 +29,40 @@ pub enum TscPrescaler {
     Div128 = 0b111,
 }
 
-pub struct Tsc<SPIN> {
-    sample_pin: SPIN,
-    tsc: TSC,
+pub trait TscExt {
+    fn tsc(self, rcc: &mut Rcc) -> Tsc;
 }
 
-impl<SPIN> Tsc<SPIN> {
+impl TscExt for TSC {
+    fn tsc(self, rcc: &mut Rcc) -> Tsc {
+        Tsc::tsc(self, rcc)
+    }
+}
+
+pub struct Tsc {
+    rb: TSC,
+}
+
+impl Tsc {
+    pub fn tsc(tsc: TSC, rcc: &mut Rcc) -> Self {
+        rcc.rb.ahbenr.modify(|_, w| w.tscen().set_bit());
+        rcc.rb.ahbrstr.modify(|_, w| w.tscrst().set_bit());
+        rcc.rb.ahbrstr.modify(|_, w| w.tscrst().clear_bit());
+
+        // clear interrupt & flags
+        tsc.icr.write(|w| w.eoaic().set_bit().mceic().set_bit());
+
+        Tsc { rb: tsc }
+    }
+
     /// Enables an interrupt event
     pub fn listen(&mut self, event: Event) {
         match event {
             Event::EndOfAcquisition => {
-                self.tsc.ier.modify(|_, w| w.eoaie().set_bit());
+                self.rb.ier.modify(|_, w| w.eoaie().set_bit());
             }
             Event::MaxCountError => {
-                self.tsc.ier.modify(|_, w| w.mceie().set_bit());
+                self.rb.ier.modify(|_, w| w.mceie().set_bit());
             }
         }
     }
@@ -52,16 +71,16 @@ impl<SPIN> Tsc<SPIN> {
     pub fn unlisten(&self, event: Event) {
         match event {
             Event::EndOfAcquisition => {
-                self.tsc.ier.modify(|_, w| w.eoaie().clear_bit());
+                self.rb.ier.modify(|_, w| w.eoaie().clear_bit());
             }
             Event::MaxCountError => {
-                self.tsc.ier.modify(|_, w| w.mceie().clear_bit());
+                self.rb.ier.modify(|_, w| w.mceie().clear_bit());
             }
         }
     }
 
     /// Releases the TSC peripheral and associated pins
-    pub fn free(self) -> (TSC, SPIN) {
-        (self.tsc, self.sample_pin)
+    pub fn free(self) -> TSC {
+        self.rb
     }
 }

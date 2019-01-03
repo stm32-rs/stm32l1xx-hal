@@ -14,6 +14,7 @@ pub use crate::exti::ExtiExt as _stm32f4xx_hal_exti_ExtiExt;
 pub use crate::gpio::GpioExt as _stm32f4xx_hal_gpio_GpioExt;
 pub use crate::i2c::I2c1Ext as _stm32f4xx_hal_i2c1_I2cExt;
 pub use crate::i2c::I2c2Ext as _stm32f4xx_hal_i2c2_I2cExt;
+pub use crate::lcd::LcdExt as _stm32f4xx_hal_lcd_LcdExt;
 pub use crate::pwm::PwmExt as _stm32f4xx_hal_pwm_PwmExt;
 pub use crate::qei::QeiExt as _stm32f4xx_hal_qei_QeiExt;
 pub use crate::rcc::RccExt as _stm32f4xx_hal_rcc_RccExt;
