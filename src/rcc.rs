@@ -81,7 +81,7 @@ pub enum PLLSource {
 }
 
 /// HSI speed
-pub const HSI_FREQ: u32 = 15_998_976;
+pub const HSI_FREQ: u32 = 16_000_000;
 
 /// Clocks configutation
 pub struct Config {
