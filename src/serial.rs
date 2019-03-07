@@ -162,16 +162,21 @@ pub struct Tx<USART> {
     _usart: PhantomData<USART>,
 }
 
+pub trait SerialExt<USART, PINS> {
+    fn usart(
+        self,
+        pins: PINS,
+        config: Config,
+        rcc: &mut Rcc,
+    ) -> Result<Serial<USART>, InvalidConfig>;
+}
+
 macro_rules! usart {
     ($(
         $USARTX:ident: ($usartX:ident, $apbXenr:ident, $usartXen:ident, $pclkX:ident, $SerialExt:ident),
     )+) => {
         $(
-            pub trait $SerialExt<PINS> {
-                fn usart(self, pins: PINS, config: Config, rcc: &mut Rcc) -> Result<Serial<$USARTX>, InvalidConfig>;
-            }
-
-            impl<PINS> $SerialExt<PINS> for $USARTX
+            impl<PINS> SerialExt<$USARTX, PINS> for $USARTX
                 where
                     PINS: Pins<$USARTX>,
             {
@@ -318,15 +323,6 @@ macro_rules! usart {
                 fn read(&mut self) -> nb::Result<u8, Error> {
                     // NOTE(unsafe) atomic read with no side effects
                     let sr = unsafe { (*$USARTX::ptr()).sr.read() };
-
-                    // Any error requires the dr to be read to clear
-                    if sr.pe().bit_is_set()
-                        || sr.fe().bit_is_set()
-                        || sr.nf().bit_is_set()
-                        || sr.ore().bit_is_set()
-                    {
-                        unsafe { (*$USARTX::ptr()).dr.read() };
-                    }
 
                     Err(if sr.pe().bit_is_set() {
                         nb::Error::Other(Error::Parity)

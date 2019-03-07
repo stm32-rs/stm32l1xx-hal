@@ -39,7 +39,7 @@ pub enum Error {
 }
 
 macro_rules! i2c {
-    ($I2CX:ident, $i2cx:ident, $i2cxen:ident, $i2crst:ident, $I2cxExt:ident) => {
+    ($I2CX:ident, $i2cx:ident, $i2cxen:ident, $i2crst:ident) => {
         impl<PINS> I2c<$I2CX, PINS> {
             pub fn $i2cx(i2c: $I2CX, pins: PINS, speed: Hertz, rcc: &mut Rcc) -> Self
             where
@@ -262,14 +262,7 @@ macro_rules! i2c {
             }
         }
 
-        pub trait $I2cxExt {
-            fn i2c<PINS, T>(self, pins: PINS, speed: T, rcc: &mut Rcc) -> I2c<$I2CX, PINS>
-            where
-                PINS: Pins<$I2CX>,
-                T: Into<Hertz>;
-        }
-
-        impl $I2cxExt for $I2CX {
+        impl I2cExt<$I2CX> for $I2CX {
             fn i2c<PINS, T>(self, pins: PINS, speed: T, rcc: &mut Rcc) -> I2c<$I2CX, PINS>
             where
                 PINS: Pins<$I2CX>,
@@ -281,5 +274,12 @@ macro_rules! i2c {
     };
 }
 
-i2c!(I2C1, i2c1, i2c1en, i2c1rst, I2c1Ext);
-i2c!(I2C2, i2c2, i2c2en, i2c2rst, I2c2Ext);
+pub trait I2cExt<I2C> {
+    fn i2c<PINS, T>(self, pins: PINS, speed: T, rcc: &mut Rcc) -> I2c<I2C, PINS>
+    where
+        PINS: Pins<I2C>,
+        T: Into<Hertz>;
+}
+
+i2c!(I2C1, i2c1, i2c1en, i2c1rst);
+i2c!(I2C2, i2c2, i2c2en, i2c2rst);
