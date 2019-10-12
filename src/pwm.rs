@@ -261,7 +261,7 @@ macro_rules! timers {
                 #[allow(unused_unsafe)]
                 tim.arr.write(|w| unsafe { w.arr().bits(arr) });
                 tim.cr1.write(|w| w.cen().set_bit());
-                unsafe { mem::uninitialized() }
+                unsafe { mem::MaybeUninit::uninit().assume_init() }
             }
         )+
     }
