@@ -46,7 +46,7 @@ where
     rcc.rb.apb1rstr.modify(|_, w| w.dacrst().set_bit());
     rcc.rb.apb1rstr.modify(|_, w| w.dacrst().clear_bit());
 
-    unsafe { mem::uninitialized() }
+    unsafe { mem::MaybeUninit::uninit().assume_init() }
 }
 
 macro_rules! dac {
