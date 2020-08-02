@@ -1,7 +1,7 @@
 //! I2C
 use hal::blocking::i2c::{Read, Write, WriteRead};
 
-use crate::gpio::gpiob::{PB10, PB11, PB6, PB7};
+use crate::gpio::gpiob::{PB10, PB11, PB6, PB7, PB8, PB9};
 use crate::gpio::{AltMode, OpenDrain, Output};
 use crate::prelude::*;
 use crate::rcc::Rcc;
@@ -19,6 +19,13 @@ pub trait Pins<I2c> {
 }
 
 impl Pins<I2C1> for (PB6<Output<OpenDrain>>, PB7<Output<OpenDrain>>) {
+    fn setup(&self) {
+        self.0.set_alt_mode(AltMode::I2C);
+        self.1.set_alt_mode(AltMode::I2C);
+    }
+}
+
+impl Pins<I2C1> for (PB8<Output<OpenDrain>>, PB9<Output<OpenDrain>>) {
     fn setup(&self) {
         self.0.set_alt_mode(AltMode::I2C);
         self.1.set_alt_mode(AltMode::I2C);
