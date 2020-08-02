@@ -8,6 +8,8 @@ extern crate cortex_m_rt as rt;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
+use embedded_hal::digital::v2::InputPin;
+use embedded_hal::digital::v2::OutputPin;
 use hal::prelude::*;
 use hal::rcc::Config;
 use hal::stm32;
@@ -28,11 +30,11 @@ fn main() -> ! {
     let mut led = gpiob.pb6.into_push_pull_output();
 
     loop {
-        if button.is_high() {
-            led.set_high();
+        if button.is_high().unwrap() {
+            led.set_high().unwrap();
             delay.delay(500.ms());
         } else {
-            led.set_low();
+            led.set_low().unwrap();
         }
     }
 }

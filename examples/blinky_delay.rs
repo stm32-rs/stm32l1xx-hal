@@ -8,6 +8,7 @@ extern crate cortex_m_rt as rt;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
+use embedded_hal::digital::v2::ToggleableOutputPin;
 use hal::prelude::*;
 use hal::rcc::Config;
 use hal::stm32;
@@ -25,7 +26,7 @@ fn main() -> ! {
     let mut led = gpiob.pb6.into_push_pull_output();
 
     loop {
-        led.toggle();
+        led.toggle().unwrap();
         delay.delay(300.ms());
     }
 }
