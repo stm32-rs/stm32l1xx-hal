@@ -48,7 +48,6 @@ panic-semihosting = "0.5.1"
 cortex-m-rtfm = "0.4.2"
 
 [features]
-default = ["rt", "stm32l162"]
 rt = ["stm32l1/rt"]
 stm32l100 = ["stm32l1/stm32l100"]
 stm32l151 = ["stm32l1/stm32l151"]
