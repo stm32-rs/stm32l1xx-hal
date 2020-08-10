@@ -210,8 +210,15 @@ macro_rules! i2c {
                 bytes: &[u8],
                 buffer: &mut [u8],
             ) -> Result<(), Self::Error> {
-                self.write_bytes(addr, bytes)?;
-                self.read(addr, buffer)?;
+                if !bytes.is_empty() {
+                    self.write_bytes(addr, bytes)?;
+                }
+
+                if !buffer.is_empty() {
+                    self.read(addr, buffer)?;
+                } else if !bytes.is_empty() {
+                    self.i2c.cr1.modify(|_, w| w.stop().set_bit());
+                }
 
                 Ok(())
             }
