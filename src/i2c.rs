@@ -133,6 +133,45 @@ macro_rules! i2c {
                 (self.i2c, self.pins)
             }
 
+            fn write_bytes(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Error> {
+                // Send a START condition
+                self.i2c.cr1.modify(|_, w| w.start().set_bit());
+
+                // Wait until START condition was generated
+                while {
+                    let sr1 = self.i2c.sr1.read();
+                    sr1.sb().bit_is_clear()
+                } {}
+
+                // Also wait until signalled we're master and everything is waiting for us
+                while {
+                    let sr2 = self.i2c.sr2.read();
+                    sr2.msl().bit_is_clear() && sr2.busy().bit_is_clear()
+                } {}
+
+                // Set up current address, we're trying to talk to
+                self.i2c
+                    .dr
+                    .write(|w| unsafe { w.bits(u32::from(addr) << 1) });
+
+                // Wait until address was sent
+                while {
+                    let sr1 = self.i2c.sr1.read();
+                    sr1.addr().bit_is_clear()
+                } {}
+
+                // Clear condition by reading SR2
+                self.i2c.sr2.read();
+
+                // Send bytes
+                for c in bytes {
+                    self.send_byte(*c)?;
+                }
+
+                // Fallthrough is success
+                Ok(())
+            }
+
             fn send_byte(&self, byte: u8) -> Result<(), Error> {
                 // Wait until we're ready for sending
                 while self.i2c.sr1.read().tx_e().bit_is_clear() {}
@@ -171,7 +210,7 @@ macro_rules! i2c {
                 bytes: &[u8],
                 buffer: &mut [u8],
             ) -> Result<(), Self::Error> {
-                self.write(addr, bytes)?;
+                self.write_bytes(addr, bytes)?;
                 self.read(addr, buffer)?;
 
                 Ok(())
@@ -182,39 +221,10 @@ macro_rules! i2c {
             type Error = Error;
 
             fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Self::Error> {
-                // Send a START condition
-                self.i2c.cr1.modify(|_, w| w.start().set_bit());
+                self.write_bytes(addr, bytes)?;
 
-                // Wait until START condition was generated
-                while {
-                    let sr1 = self.i2c.sr1.read();
-                    sr1.sb().bit_is_clear()
-                } {}
-
-                // Also wait until signalled we're master and everything is waiting for us
-                while {
-                    let sr2 = self.i2c.sr2.read();
-                    sr2.msl().bit_is_clear() && sr2.busy().bit_is_clear()
-                } {}
-
-                // Set up current address, we're trying to talk to
-                self.i2c
-                    .dr
-                    .write(|w| unsafe { w.bits(u32::from(addr) << 1) });
-
-                // Wait until address was sent
-                while {
-                    let sr1 = self.i2c.sr1.read();
-                    sr1.addr().bit_is_clear()
-                } {}
-
-                // Clear condition by reading SR2
-                self.i2c.sr2.read();
-
-                // Send bytes
-                for c in bytes {
-                    self.send_byte(*c)?;
-                }
+                // Send a STOP condition
+                self.i2c.cr1.modify(|_, w| w.stop().set_bit());
 
                 // Fallthrough is success
                 Ok(())
