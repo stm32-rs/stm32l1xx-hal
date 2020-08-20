@@ -13,6 +13,7 @@ use core::fmt::Write;
 use hal::prelude::*;
 use hal::rcc::Config;
 use hal::serial;
+use hal::serial::SerialExt;
 use hal::stm32;
 use nb::block;
 use rt::entry;

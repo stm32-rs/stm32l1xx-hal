@@ -1,7 +1,6 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
-#![feature(custom_attribute)]
 
 extern crate cortex_m;
 extern crate cortex_m_rt as rt;
@@ -13,6 +12,8 @@ extern crate stm32l1xx_hal as hal;
 use cortex_m_semihosting::hprintln;
 use rtfm::app;
 
+use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::ToggleableOutputPin;
 use hal::exti::TriggerEdge;
 use hal::gpio::gpiob::{PB6, PB7};
 use hal::gpio::{Output, PushPull};
@@ -49,15 +50,15 @@ const APP: () = {
     fn TIM2() {
         *resources.DELTA += 1;
 
-        resources.TICKS_LED.toggle();
+        resources.TICKS_LED.toggle().unwrap();
         resources.TIMER.clear_irq();
     }
 
     #[interrupt(resources = [EXTI, BUSY_LED, DELTA])]
     fn EXTI0() {
-        resources.BUSY_LED.set_high();
+        resources.BUSY_LED.set_high().unwrap();
         hprintln!("Δ: {}", resources.DELTA).unwrap();
-        resources.BUSY_LED.set_low();
+        resources.BUSY_LED.set_low().unwrap();
 
         *resources.DELTA = 0;
         resources.EXTI.clear_irq(0);

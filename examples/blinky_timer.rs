@@ -9,6 +9,7 @@ extern crate nb;
 extern crate panic_semihosting;
 extern crate stm32l1xx_hal as hal;
 
+use embedded_hal::digital::v2::ToggleableOutputPin;
 use hal::prelude::*;
 use hal::rcc::Config;
 use hal::stm32;
@@ -27,7 +28,7 @@ fn main() -> ! {
     let mut timer = dp.TIM2.timer(2.hz(), &mut rcc);
 
     loop {
-        led.toggle();
+        led.toggle().unwrap();
         block!(timer.wait()).unwrap();
     }
 }

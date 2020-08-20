@@ -8,6 +8,7 @@ extern crate cortex_m_rt as rt;
 extern crate stm32l1xx_hal as hal;
 
 use core::panic::PanicInfo;
+use embedded_hal::digital::v2::OutputPin;
 use hal::prelude::*;
 use hal::stm32;
 use rt::entry;
@@ -20,10 +21,10 @@ fn main() -> ! {
 
     loop {
         for _ in 0..1_000 {
-            led.set_high();
+            led.set_high().unwrap();
         }
         for _ in 0..1_000 {
-            led.set_low();
+            led.set_low().unwrap();
         }
     }
 }
