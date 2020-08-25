@@ -182,6 +182,11 @@ adc_pins! {
     Channel12b: (gpiog::PG4<Analog>, true, 12_u8, smpr2),
 }
 
+adc_pins! {
+    Channel16: (VTemp, false, 16_u8, smpr2),
+    Channel17: (VRef, false, 17_u8, smpr2),
+}
+
 impl VTemp {
     /// Init a new VTemp
     pub fn new() -> Self {
@@ -213,22 +218,6 @@ impl VRef {
     /// Disable the internal reference voltage.
     pub fn disable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.tsvrefe().clear_bit());
-    }
-}
-
-impl Channel<Adc> for VTemp {
-    type ID = u8;
-
-    fn channel() -> u8 {
-        16
-    }
-}
-
-impl Channel<Adc> for VRef {
-    type ID = u8;
-
-    fn channel() -> u8 {
-        17
     }
 }
 
