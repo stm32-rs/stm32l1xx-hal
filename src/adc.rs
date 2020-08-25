@@ -2,7 +2,10 @@
 use crate::gpio::*;
 use crate::rcc::Rcc;
 use crate::stm32::ADC;
+use core::ptr;
 use hal::adc::{Channel, OneShot};
+
+const VREFCAL: *const u16 = 0x1FF8_0078 as *const u16;
 
 /// Analog to Digital converter interface
 pub struct Adc {
@@ -208,6 +211,10 @@ impl VRef {
     /// Init a new VRef
     pub fn new() -> Self {
         VRef {}
+    }
+
+    pub fn get_vrefcal() -> u16 {
+        u16::from(unsafe { ptr::read(VREFCAL) })
     }
 
     /// Enable the internal voltage reference, remember to disable when not in use.
