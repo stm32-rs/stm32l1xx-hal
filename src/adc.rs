@@ -2,7 +2,10 @@
 use crate::gpio::*;
 use crate::rcc::Rcc;
 use crate::stm32::ADC;
+use core::ptr;
 use hal::adc::{Channel, OneShot};
+
+const VREFCAL: *const u16 = 0x1FF8_0078 as *const u16;
 
 /// Analog to Digital converter interface
 pub struct Adc {
@@ -182,6 +185,11 @@ adc_pins! {
     Channel12b: (gpiog::PG4<Analog>, true, 12_u8, smpr2),
 }
 
+adc_pins! {
+    Channel16: (VTemp, false, 16_u8, smpr2),
+    Channel17: (VRef, false, 17_u8, smpr2),
+}
+
 impl VTemp {
     /// Init a new VTemp
     pub fn new() -> Self {
@@ -205,6 +213,10 @@ impl VRef {
         VRef {}
     }
 
+    pub fn get_vrefcal() -> u16 {
+        u16::from(unsafe { ptr::read(VREFCAL) })
+    }
+
     /// Enable the internal voltage reference, remember to disable when not in use.
     pub fn enable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.tsvrefe().set_bit());
@@ -213,22 +225,6 @@ impl VRef {
     /// Disable the internal reference voltage.
     pub fn disable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.tsvrefe().clear_bit());
-    }
-}
-
-impl Channel<Adc> for VTemp {
-    type ID = u8;
-
-    fn channel() -> u8 {
-        16
-    }
-}
-
-impl Channel<Adc> for VRef {
-    type ID = u8;
-
-    fn channel() -> u8 {
-        17
     }
 }
 
