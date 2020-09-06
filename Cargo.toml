@@ -66,3 +66,7 @@ lto = true
 [[example]]
 name = "button_irq"
 required-features = ["rt"]
+
+[[example]]
+name = "timer"
+required-features = ["rt"]
