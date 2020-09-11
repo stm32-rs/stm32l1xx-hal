@@ -1,17 +1,24 @@
 language: rust
 rust:
+  - stable
   - beta
   - nightly
 cache: cargo
 env:
+- MCU=stm32l100,rt
 - MCU=stm32l100
+- MCU=stm32l151,rt
 - MCU=stm32l151
+- MCU=stm32l152,rt
 - MCU=stm32l152
+- MCU=stm32l162,rt
 - MCU=stm32l162
 matrix:
   allow_failures:
     - rust: nightly
   fast_finish: true
-script:
+install:
   - rustup target add thumbv7m-none-eabi
+script:
   - cargo build --features=$MCU
+  - cargo build --features=$MCU --examples
