@@ -63,7 +63,7 @@ macro_rules! hal {
                     rcc.rb.apb1rstr.modify(|_, w| w.$timXrst().clear_bit());
 
                     // Configure TxC1 and TxC2 as captures
-                    tim.ccmr1_output.write(|w| unsafe {
+                    tim.ccmr1_output().write(|w| unsafe {
                         w.cc1s().bits(0b01).cc2s().set_bit()
                     });
 
@@ -84,7 +84,7 @@ macro_rules! hal {
                     });
 
                     // Encoder mode, count up/down on both TI1FP1 and TI2FP2
-                    tim.smcr.write(|w| unsafe { w.sms().bits(0b011) });
+                    tim.smcr.write(|w| w.sms().bits(0b011) );
 
                     tim.arr.write(|w| w.arr().bits(u16::MAX));
                     tim.cr1.write(|w| w.cen().enabled());
