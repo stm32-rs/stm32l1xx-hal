@@ -151,7 +151,7 @@ macro_rules! timers {
                     let ticks = self.clocks.$timclk().0 / freq;
                     let psc = u16((ticks - 1) / (1 << 16)).unwrap();
 
-                    self.tim.psc.write(|w| unsafe { w.psc().bits(psc) });
+                    self.tim.psc.write(|w| w.psc().bits(psc) );
                     self.tim.arr.write(|w| unsafe { w.bits(ticks / u32(psc + 1)) });
 
                     self.tim.cr1.modify(|_, w| w.urs().set_bit());
