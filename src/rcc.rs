@@ -220,7 +220,7 @@ impl RccExt for RCC {
                 };
 
                 // Disable PLL
-                self.cr.write(|w| w.pllon().clear_bit());
+                self.cr.modify(|_, w| w.pllon().clear_bit());
                 while self.cr.read().pllrdy().bit_is_set() {}
 
                 let mul_bytes = mul as u8;
@@ -245,7 +245,7 @@ impl RccExt for RCC {
                 };
                 assert!(freq <= 24.mhz().0);
 
-                self.cfgr.write(move |w| unsafe {
+                self.cfgr.modify(move |_, w| unsafe {
                     w.pllmul()
                         .bits(mul_bytes)
                         .plldiv()
@@ -255,7 +255,7 @@ impl RccExt for RCC {
                 });
 
                 // Enable PLL
-                self.cr.write(|w| w.pllon().set_bit());
+                self.cr.modify(|_, w| w.pllon().set_bit());
                 while self.cr.read().pllrdy().bit_is_clear() {}
 
                 (freq, 3)
