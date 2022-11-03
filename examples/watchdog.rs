@@ -23,7 +23,7 @@ fn main() -> ! {
     let rcc = dp.RCC.freeze(Config::hsi());
     let mut delay = cp.SYST.delay(rcc.clocks);
 
-    hprintln!("Starting watchdog").unwrap();
+    hprintln!("Starting watchdog");
 
     //let mut watchdog = dp.WWDG.watchdog(&mut rcc);
     let mut watchdog = dp.IWDG.watchdog();

@@ -40,7 +40,7 @@ fn EXTI0() {
     static mut COUNT: i32 = 0;
 
     *COUNT += 1;
-    hprintln!("CLICK # {}", COUNT).unwrap();
+    hprintln!("CLICK # {}", COUNT);
 
     cortex_m::interrupt::free(|cs| {
         if let &mut Some(ref mut exti) = INT.borrow(cs).borrow_mut().deref_mut() {

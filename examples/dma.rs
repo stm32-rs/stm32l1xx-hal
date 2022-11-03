@@ -23,6 +23,6 @@ fn main() -> ! {
     let dma1 = dp.DMA1.dma(&mut rcc);
     let dma2 = dp.DMA2.dma(&mut rcc);
 
-    hprintln!("DMA1: {:?}, DMA2: {:?}", dma1, dma2).unwrap();
+    hprintln!("DMA1: {:?}, DMA2: {:?}", dma1, dma2);
     loop {}
 }

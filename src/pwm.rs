@@ -54,14 +54,14 @@ macro_rules! channels {
             fn enable(&mut self) {
                 unsafe {
                     let tim = &*$TIMX::ptr();
-                    tim.ccmr1_output
+                    tim.ccmr1_output()
                         .modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
                     tim.ccer.modify(|_, w| w.cc1e().set_bit());
                 }
             }
 
             fn get_duty(&self) -> u16 {
-                unsafe { (*$TIMX::ptr()).ccr1.read().ccr1().bits() }
+                unsafe { (*$TIMX::ptr()).ccr1().read().ccr().bits() }
             }
 
             fn get_max_duty(&self) -> u16 {
@@ -69,7 +69,7 @@ macro_rules! channels {
             }
 
             fn set_duty(&mut self, duty: u16) {
-                unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr1().bits(duty)) }
+                unsafe { (*$TIMX::ptr()).ccr1().write(|w| w.ccr().bits(duty)) }
             }
         }
     };
@@ -137,14 +137,14 @@ macro_rules! channels {
             fn enable(&mut self) {
                 unsafe {
                     let tim = &*$TIMX::ptr();
-                    tim.ccmr1_output
+                    tim.ccmr1_output()
                         .modify(|_, w| w.oc2pe().set_bit().oc2m().bits(6));
                     tim.ccer.modify(|_, w| w.cc2e().set_bit());
                 }
             }
 
             fn get_duty(&self) -> u16 {
-                unsafe { (*$TIMX::ptr()).ccr2.read().ccr2().bits() }
+                unsafe { (*$TIMX::ptr()).ccr2().read().ccr().bits() }
             }
 
             fn get_max_duty(&self) -> u16 {
@@ -152,7 +152,7 @@ macro_rules! channels {
             }
 
             fn set_duty(&mut self, duty: u16) {
-                unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr2().bits(duty)) }
+                unsafe { (*$TIMX::ptr()).ccr2().write(|w| w.ccr().bits(duty)) }
             }
         }
 
@@ -168,14 +168,14 @@ macro_rules! channels {
             fn enable(&mut self) {
                 unsafe {
                     let tim = &*$TIMX::ptr();
-                    tim.ccmr2_output
+                    tim.ccmr2_output()
                         .modify(|_, w| w.oc3pe().set_bit().oc3m().bits(6));
                     tim.ccer.modify(|_, w| w.cc3e().set_bit());
                 }
             }
 
             fn get_duty(&self) -> u16 {
-                unsafe { (*$TIMX::ptr()).ccr3.read().ccr3().bits() }
+                unsafe { (*$TIMX::ptr()).ccr3().read().ccr().bits() }
             }
 
             fn get_max_duty(&self) -> u16 {
@@ -183,7 +183,7 @@ macro_rules! channels {
             }
 
             fn set_duty(&mut self, duty: u16) {
-                unsafe { (*$TIMX::ptr()).ccr3.write(|w| w.ccr3().bits(duty)) }
+                unsafe { (*$TIMX::ptr()).ccr3().write(|w| w.ccr().bits(duty)) }
             }
         }
 
@@ -199,14 +199,14 @@ macro_rules! channels {
             fn enable(&mut self) {
                 unsafe {
                     let tim = &*$TIMX::ptr();
-                    tim.ccmr2_output
+                    tim.ccmr2_output()
                         .modify(|_, w| w.oc4pe().set_bit().oc4m().bits(6));
                     tim.ccer.modify(|_, w| w.cc4e().set_bit());
                 }
             }
 
             fn get_duty(&self) -> u16 {
-                unsafe { (*$TIMX::ptr()).ccr4.read().ccr4().bits() }
+                unsafe { (*$TIMX::ptr()).ccr4().read().ccr().bits() }
             }
 
             fn get_max_duty(&self) -> u16 {
@@ -214,7 +214,7 @@ macro_rules! channels {
             }
 
             fn set_duty(&mut self, duty: u16) {
-                unsafe { (*$TIMX::ptr()).ccr4.write(|w| w.ccr4().bits(duty)) }
+                unsafe { (*$TIMX::ptr()).ccr4().write(|w| w.ccr().bits(duty)) }
             }
         }
     };
@@ -257,7 +257,7 @@ macro_rules! timers {
                 let ticks = clk / freq;
                 let psc = u16((ticks - 1) / (1 << 16)).unwrap();
                 let arr = u16(ticks / u32(psc + 1)).unwrap();
-                tim.psc.write(|w| unsafe { w.psc().bits(psc) });
+                tim.psc.write(|w| w.psc().bits(psc));
                 #[allow(unused_unsafe)]
                 tim.arr.write(|w| unsafe { w.arr().bits(arr) });
                 tim.cr1.write(|w| w.cen().set_bit());

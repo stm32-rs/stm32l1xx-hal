@@ -31,6 +31,6 @@ fn main() -> ! {
         let after = qei.count();
 
         let elapsed = after.wrapping_sub(before) as i16;
-        hprintln!("Δ: {}", elapsed).unwrap();
+        hprintln!("Δ: {}", elapsed);
     }
 }

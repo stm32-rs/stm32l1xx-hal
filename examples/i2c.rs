@@ -32,8 +32,8 @@ fn main() -> ! {
 
     loop {
         match i2c.read(0x60, &mut buf) {
-            Ok(_) => hprintln!("Buf: {:?}", buf).unwrap(),
-            Err(err) => hprintln!("Err: {:?}", err).unwrap(),
+            Ok(_) => hprintln!("Buf: {:?}", buf),
+            Err(err) => hprintln!("Err: {:?}", err),
         }
     }
 }

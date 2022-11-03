@@ -42,7 +42,7 @@ fn main() -> ! {
 fn TIM2() {
     static mut COUNTER: u32 = 0;
     *COUNTER += 1;
-    hprintln!("{}", COUNTER).unwrap();
+    hprintln!("{}", COUNTER);
 
     cortex_m::interrupt::free(|cs| {
         if let Some(ref mut timer) = TIMER.borrow(cs).borrow_mut().deref_mut() {
