@@ -49,4 +49,6 @@ pub mod serial;
 pub mod spi;
 pub mod time;
 pub mod timer;
+#[cfg(feature = "stm32-usbd")]
+pub mod usb;
 pub mod watchdog;

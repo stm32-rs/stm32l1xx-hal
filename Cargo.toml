@@ -21,31 +21,34 @@ repository = "https://github.com/stm32-rs/stm32l1xx-hal"
 version = "0.1.0"
 
 [dependencies]
-cortex-m = "0.5.8"
-nb = "0.1.1"
-stm32l1 = "0.5.0"
+cortex-m = "0.7.1"
+nb = "1.0.0"
+stm32l1 = "0.14.0"
+bare-metal = "1.0.0"
 
-[dependencies.bare-metal]
-features = ["const-fn"]
-version = "0.2.4"
+[dependencies.stm32-usbd]
+version = "0.6.0"
+optional = true
 
 [dependencies.cast]
 default-features = false
-version = "0.2.2"
+version = "0.3.0"
 
 [dependencies.embedded-hal]
 features = ["unproven"]
-version = "0.2.3"
+version = "0.2.6"
 
 [dependencies.void]
 default-features = false
 version = "1.0.2"
 
 [dev-dependencies]
-cortex-m-rt = "0.6.7"
-cortex-m-semihosting = "0.3.2"
-panic-semihosting = "0.5.1"
-cortex-m-rtic = "0.5.5"
+cortex-m-rt = "0.7.1"
+cortex-m-semihosting = "0.3.7"
+panic-semihosting = "0.5.6"
+cortex-m-rtic = "1.0.0"
+usb-device = "0.2.8"
+usbd-serial = "0.1.1"
 
 [features]
 rt = ["stm32l1/rt"]
@@ -70,3 +73,7 @@ required-features = ["rt"]
 [[example]]
 name = "timer"
 required-features = ["rt"]
+
+[[example]]
+name = "usb_serial"
+required-features = ["rt", "stm32-usbd"]

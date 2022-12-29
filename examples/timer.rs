@@ -23,13 +23,14 @@ static TIMER: Mutex<RefCell<Option<Timer<stm32::TIM2>>>> = Mutex::new(RefCell::n
 #[entry]
 fn main() -> ! {
     let dp = stm32::Peripherals::take().unwrap();
-    let mut cp = cortex_m::Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(Config::hsi());
 
     let mut timer = dp.TIM2.timer(1.hz(), &mut rcc);
     timer.listen();
 
-    cp.NVIC.enable(Interrupt::TIM2);
+    unsafe {
+        cortex_m::peripheral::NVIC::unmask(Interrupt::TIM2);
+    }
 
     cortex_m::interrupt::free(move |cs| {
         *TIMER.borrow(cs).borrow_mut() = Some(timer);
